@@ -136,7 +136,6 @@ legend{
 
 /* Campos de entrada com tamanho reduzido e elegante (max-width de 440px) */
 form input{
-    form input{
     width:100%;
     max-width:none;
     padding:10px;
@@ -145,7 +144,6 @@ form input{
     border-radius:6px;
     font-size:.92rem;
     transition:.2s;
-}
 }
 
 .linha-formulario{
@@ -159,6 +157,16 @@ form input{
     flex:1;
     display:flex;
     flex-direction:column;
+}
+
+@media (max-width: 640px) {
+    .linha-formulario {
+        flex-direction: column;
+    }
+
+    .campo {
+        width: 100%;
+    }
 }
 
 /* Container e Elementos do Upload de Imagem em Linha (Flexbox) */
