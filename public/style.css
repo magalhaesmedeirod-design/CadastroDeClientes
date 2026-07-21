@@ -14,6 +14,11 @@ body{
     background:#212529;
     min-height:100vh;
     padding:20px 15px;
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:1000;
+    transition:transform .25s ease;
 }
 
 .sidebar h3{
@@ -39,7 +44,19 @@ body{
     flex: 1;
     min-width: 0;
     padding: 30px;
+    margin-left:250px;
+    transition:margin-left .25s ease;
 }
+
+.seletor-idioma { margin-top:24px; display:flex; flex-direction:column; gap:6px; }
+.seletor-idioma label { font-size:.82rem; color:#cbd5e1; }
+.seletor-idioma select { width:100%; border:1px solid #64748b; border-radius:6px; padding:8px; background:#fff; color:#1f2937; }
+
+.btn-menu { display:flex; position:fixed; z-index:1100; top:16px; left:250px; width:42px; height:42px; padding:9px; flex-direction:column; justify-content:space-around; background:#212529; border-radius:0 7px 7px 0; transition:left .25s ease; }
+.btn-menu span { display:block; width:100%; height:3px; background:#fff; border-radius:3px; }
+body.menu-recolhido .sidebar { transform:translateX(-100%); }
+body.menu-recolhido .content { margin-left:0; }
+body.menu-recolhido .btn-menu { left:0; }
 
 .content h1{
     font-size:28px;
@@ -73,7 +90,8 @@ body{
 
 
 
-.tela-secao { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 100%; }
+.tela-secao { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); width: 100%; max-width: 1100px; }
+.campo-removido { display:none !important; }
 
 /* Layout da Tabela e Barra Superior de Busca */
 .topo-tabela { display: flex; justify-content: space-between; margin-bottom: 25px; gap: 20px; }
@@ -160,6 +178,12 @@ form input{
 }
 
 @media (max-width: 640px) {
+    .sidebar { transform:translateX(-100%); box-shadow:3px 0 12px rgba(0,0,0,.2); }
+    body.menu-aberto .sidebar { transform:translateX(0); }
+    .content { margin-left:0; padding:72px 16px 16px; }
+    .tela-secao { max-width:100%; }
+    .btn-menu { left:0; }
+    body.menu-aberto .btn-menu { left:250px; }
     .linha-formulario {
         flex-direction: column;
     }

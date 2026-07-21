@@ -19,14 +19,18 @@ def api_listar():
 
 @app.route("/api/clientes", methods=["POST"])
 def api_criar():
-    dados = request.json
-    novo_cliente = controladores.criar_cliente(dados)
-    return jsonify(novo_cliente), 201
+    try:
+        novo_cliente = controladores.criar_cliente(request.get_json(silent=True) or {})
+        return jsonify(novo_cliente), 201
+    except controladores.ErroValidacao as erro:
+        return jsonify({"erro": str(erro)}), 400
 
 @app.route("/api/clientes/<string:id_cliente>", methods=["PUT"])
 def api_editar(id_cliente):
-    dados = request.json
-    cliente_atualizado = controladores.atualizar_cliente(id_cliente, dados)
+    try:
+        cliente_atualizado = controladores.atualizar_cliente(id_cliente, request.get_json(silent=True) or {})
+    except controladores.ErroValidacao as erro:
+        return jsonify({"erro": str(erro)}), 400
     if cliente_atualizado:
         return jsonify(cliente_atualizado)
     return jsonify({"erro": "Cliente nao encontrado"}), 404
