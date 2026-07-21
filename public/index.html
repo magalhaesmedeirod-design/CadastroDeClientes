@@ -117,10 +117,11 @@
                         </div>
 
                         <div class="campo">
-                            <input type="text" id="input-cpf" placeholder="CPF (000.000.000-00)" maxlength="14" required>
+                            <input type="text" id="input-cpf" placeholder="CPF (000.000.000-00)" maxlength="14"
+                                required>
 
                             <span class="erro-campo">
-                            Este campo é obrigatório.
+                                Este campo é obrigatório.
                             </span>
                         </div>
 
@@ -160,7 +161,8 @@
 
                         <div class="campo">
 
-                            <input type="tel" id="input-telefone" placeholder="(00) 00000-0000" maxlength="15" inputmode="numeric" required>
+                            <input type="tel" id="input-telefone" placeholder="(00) 00000-0000" maxlength="15"
+                                inputmode="numeric" required>
 
                             <span class="erro-campo">
                                 Este campo é obrigatório.
@@ -177,7 +179,8 @@
                     <div class="linha-formulario">
 
                         <div class="campo">
-                            <input type="text" id="input-cep" placeholder="00000-000" maxlength="9" inputmode="numeric" required>
+                            <input type="text" id="input-cep" placeholder="00000-000" maxlength="9" inputmode="numeric"
+                                required>
 
                             <span class="erro-campo">
                                 Este campo é obrigatório.
@@ -194,17 +197,19 @@
 
                     </div>
 
-                    <div class="campo">
+                    <!-- Rua e Bairro na mesma linha -->
+                    <div class="linha-formulario">
 
-                        <input type="text" id="input-logradouro" placeholder="Rua (ex.: Rua das Flores)" maxlength="100" required>
-                        <span class="erro-campo">Este campo é obrigatório.</span>
-                    </div>
-                    <div class="campo">
-                        <input type="text" id="input-complemento" placeholder="Complemento (Opcional)" maxlength="60">
+                        <div class="campo">
 
-                    </div>
+                            <input type="text" id="input-logradouro" placeholder="Rua (ex.: Rua das Flores)"
+                                maxlength="100" required>
 
-                    <div class="linha-formulario mt-3">
+                            <span class="erro-campo">
+                                Este campo é obrigatório.
+                            </span>
+
+                        </div>
 
                         <div class="campo">
 
@@ -216,7 +221,17 @@
 
                         </div>
 
-                        <div class="campo campo-removido">
+                    </div>
+
+                    <div class="campo">
+
+                        <input type="text" id="input-complemento" placeholder="Complemento (Opcional)" maxlength="60">
+
+                    </div>
+
+                    <div class="linha-formulario campo-removido">
+
+                        <div class="campo">
 
                             <input type="text" id="input-cidade" placeholder="Cidade" maxlength="80">
 
@@ -228,7 +243,7 @@
 
                     </div>
 
-                    <div class="linha-formulario mt-3 campo-removido" style="max-width:140px;">
+                    <div class="linha-formulario campo-removido" style="max-width:140px;">
 
                         <div class="campo">
 
@@ -241,6 +256,7 @@
                         </div>
 
                     </div>
+
                 </fieldset>
                 <div class="acoes-formulario">
 
