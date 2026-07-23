@@ -9,7 +9,7 @@ def somente_digitos(valor):
     return re.sub(r"\D", "", str(valor or ""))
 
 def validar_dados(dados):
-    limites = {"nome": 120, "email": 254, "logradouro": 100, "complemento": 60, "bairro": 80}
+    limites = {"nome": 60, "email": 100, "logradouro": 60, "complemento": 40, "bairro": 40, "cidade": 40}
     limpos = {campo: str(dados.get(campo, "")).strip() for campo in limites}
     for campo, limite in limites.items():
         if campo != "complemento" and not limpos[campo]:

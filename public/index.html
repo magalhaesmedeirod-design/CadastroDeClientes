@@ -1,292 +1,128 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Administrativo - Clientes</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de Clientes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 </head>
-
-<body>
-    <button id="btn-menu" class="btn-menu" type="button" aria-label="Abrir ou fechar menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-    </button>
-
-    <!-- Barra de Navegação Lateral -->
-    <aside id="sidebar" class="sidebar bg-dark text-white p-3">
-
-        <h3 class="text-center mb-4">
-            <i class="bi bi-speedometer2"></i>
-            Painel
-        </h3>
-
-        <div class="d-grid gap-2">
-
-            <button id="btn-nav-home" class="btn btn-outline-light text-start">
-                <i class="bi bi-house-door-fill me-2"></i>
-                Home
-            </button>
-
-            <button id="btn-nav-clientes" class="btn btn-outline-light text-start">
-                <i class="bi bi-people-fill me-2"></i>
-                Clientes
-            </button>
-
+<body class="bg-body-tertiary">
+  <nav class="navbar navbar-dark bg-dark shadow-sm d-lg-none">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-semibold" href="#home"><i class="bi bi-people-fill me-2"></i>Painel</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal" aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="menuPrincipal">
+        <div class="navbar-nav pt-2">
+          <a class="nav-link" href="#home" data-tela="home"><i class="bi bi-house-door me-1"></i>Início</a>
+          <a class="nav-link" href="#clientes" data-tela="clientes"><i class="bi bi-person-vcard me-1"></i>Clientes</a>
         </div>
+      </div>
+    </div>
+  </nav>
 
-        <div class="seletor-idioma">
-            <label for="input-idioma">Idioma / Language</label>
-            <select id="input-idioma" aria-label="Escolher idioma">
-                <option value="pt-BR">Português</option>
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="zh-CN">中文</option>
-                <option value="browser">Outros idiomas — tradução do navegador</option>
-            </select>
-        </div>
-
+  <div class="row g-0 min-vh-100">
+    <aside class="d-none d-lg-flex col-lg-3 col-xl-2 flex-column flex-shrink-0 p-3 text-bg-dark position-sticky top-0 vh-100">
+      <a class="d-flex align-items-center mb-4 text-white text-decoration-none fs-4 fw-semibold" href="#home" data-tela="home">
+        <i class="bi bi-speedometer2 me-2"></i>Painel
+      </a>
+      <hr class="mt-0">
+      <div class="d-grid gap-2">
+        <button class="btn btn-outline-light text-start py-2" type="button" data-tela="home"><i class="bi bi-house-door-fill me-2"></i>Início</button>
+        <button class="btn btn-outline-light text-start py-2" type="button" data-tela="clientes"><i class="bi bi-people-fill me-2"></i>Clientes</button>
+      </div>
+      <div class="mt-auto pt-4">
+        <label class="form-label small" for="input-idioma">Idioma / Language</label>
+        <select id="input-idioma" class="form-select form-select-sm" aria-label="Escolher idioma">
+          <option value="pt-BR">Português</option>
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="zh-CN">中文</option>
+        </select>
+      </div>
     </aside>
 
-    <!-- Área Principal Onde as Telas Aparecem -->
-    <main class="content">
+    <main class="col-12 col-lg-9 col-xl-10 py-4 py-md-5 px-3 px-md-4 px-xxl-5">
+    <section id="tela-home"></section>
 
-        <!-- TELA 1: HOME -->
-        <section id="tela-home" class="tela-secao">
-            <h1>Início</h1>
-            <p>Selecione 'Clientes' na barra lateral para gerenciar o sistema.</p>
-        </section>
-
-        <!-- TELA 2: TABELA DE LISTAGEM -->
-        <section id="tela-clientes" class="tela-secao" style="display: none;">
-            <div class="topo-tabela">
-                <input type="text" id="campo-busca" placeholder="Pesquisar por nome, cidade ou CPF...">
-                <button id="btn-abrir-cadastro" class="btn-sucesso">+ Adicionar Cliente</button>
+    <section id="tela-clientes" hidden>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3 p-md-4">
+          <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-4">
+            <div>
+              <h1 class="h3 mb-1">Clientes</h1>
+              <p class="text-body-secondary mb-0" id="total-clientes"></p>
             </div>
+            <button id="btn-abrir-cadastro" class="btn btn-success" type="button"><i class="bi bi-person-plus-fill me-2"></i>Adicionar cliente</button>
+          </div>
+          <div class="input-group mb-4">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="campo-busca" class="form-control" type="search" placeholder="Pesquisar por nome, cidade ou CPF" aria-label="Pesquisar clientes">
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Telefone</th><th>Cidade</th></tr>
+              </thead>
+              <tbody id="linhas-tabela"></tbody>
+            </table>
+          </div>
+          <p id="sem-clientes" class="text-center text-body-secondary py-4 mb-0" hidden>Nenhum cliente encontrado.</p>
+          <nav class="mt-4" aria-label="Paginação de clientes">
+            <ul id="paginacao" class="pagination justify-content-center flex-wrap mb-0"></ul>
+          </nav>
+        </div>
+      </div>
+    </section>
 
-            <div class="tabela-responsiva">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>CPF</th>
-                            <th>E-mail</th>
-                            <th>Telefone</th>
-                            <th>Bairro</th>
-                        </tr>
-                    </thead>
-                    <tbody id="linhas-tabela">
-                        <!-- O JavaScript vai construir as linhas aqui dentro -->
-                    </tbody>
-                </table>
+    <section id="tela-formulario" class="col-12 col-lg-10 col-xl-8 col-xxl-7 mx-auto" hidden>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3 p-md-4">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 id="titulo-formulario" class="h3 mb-0">Cadastrar cliente</h1>
+            <button class="btn btn-outline-secondary" type="button" data-tela="clientes"><i class="bi bi-arrow-left me-2"></i>Voltar</button>
+          </div>
+          <div id="mensagem-formulario" class="alert" role="alert" hidden></div>
+          <form id="form-cliente" novalidate>
+            <input id="input-id" type="hidden">
+            <fieldset class="border rounded p-3 mb-4">
+              <legend class="float-none w-auto px-2 fs-6">Dados principais</legend>
+              <div class="row g-3">
+                <div class="col-md-8"><label class="form-label" for="input-nome">Nome completo</label><input class="form-control" id="input-nome" maxlength="60" required><div class="invalid-feedback"></div></div>
+                <div class="col-md-4"><label class="form-label" for="input-cpf">CPF</label><input class="form-control" id="input-cpf" maxlength="14" inputmode="numeric" placeholder="000.000.000-00" required><div class="invalid-feedback"></div></div>
+                <div class="col-12"><label class="form-label" for="input-foto">Foto (opcional)</label><input class="form-control" id="input-foto" type="file" accept="image/*"><div class="form-text" id="nome-arquivo">Nenhum arquivo selecionado.</div></div>
+              </div>
+            </fieldset>
+            <fieldset class="border rounded p-3 mb-4">
+              <legend class="float-none w-auto px-2 fs-6">Contato</legend>
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label" for="input-email">E-mail</label><input class="form-control" id="input-email" type="email" maxlength="100" required><div class="invalid-feedback"></div></div>
+                <div class="col-md-6"><label class="form-label" for="input-telefone">Telefone</label><input class="form-control" id="input-telefone" maxlength="15" inputmode="numeric" placeholder="(00) 00000-0000" required><div class="invalid-feedback"></div></div>
+              </div>
+            </fieldset>
+            <fieldset class="border rounded p-3 mb-4">
+              <legend class="float-none w-auto px-2 fs-6">Endereço</legend>
+              <div class="row g-3">
+                <div class="col-md-4"><label class="form-label" for="input-cep">CEP</label><input class="form-control" id="input-cep" maxlength="9" inputmode="numeric" placeholder="00000-000" required><div class="invalid-feedback"></div></div>
+                <div class="col-md-8"><label class="form-label" for="input-logradouro">Logradouro</label><input class="form-control" id="input-logradouro" maxlength="60" required><div class="invalid-feedback"></div></div>
+                <div class="col-md-6"><label class="form-label" for="input-bairro">Bairro</label><input class="form-control" id="input-bairro" maxlength="40" required><div class="invalid-feedback"></div></div>
+                <div class="col-md-6"><label class="form-label" for="input-cidade">Cidade</label><input class="form-control" id="input-cidade" maxlength="40" required><div class="invalid-feedback"></div></div>
+                <div class="col-12"><label class="form-label" for="input-complemento">Complemento <span class="text-body-secondary">(opcional)</span></label><input class="form-control" id="input-complemento" maxlength="40"></div>
+              </div>
+            </fieldset>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-primary" type="submit"><i class="bi bi-floppy-fill me-2"></i>Salvar</button>
+              <button id="btn-excluir-cliente" class="btn btn-outline-danger" type="button" disabled><i class="bi bi-trash-fill me-2"></i>Excluir</button>
             </div>
-
-            <!-- BLOCO DE PAGINAÇÃO CENTRALIZADA ESTILO GOOGLE -->
-            <div class="paginacao-container">
-                <button id="btn-pag-anterior" class="btn-pag">« Anterior</button>
-                <div id="numeros-paginas" class="numeros-paginas-grupo"></div>
-                <button id="btn-pag-proximo" class="btn-pag">Próximo »</button>
-            </div>
-        </section>
-
-        <!-- TELA 3: FORMULÁRIO DE CADASTRO E EDIÇÃO -->
-        <section id="tela-formulario" class="tela-secao" style="display: none;">
-            <h1 id="titulo-formulario">Cadastrar Novo Cliente</h1>
-
-            <form id="form-cliente" novalidate>
-                <!-- Input invisível para guardar o ID quando formos editar ou excluir -->
-                <input type="hidden" id="input-id">
-
-                <fieldset>
-                    <legend>Dados Principais</legend>
-
-                    <div class="linha-formulario">
-                        <div class="campo">
-                            <input type="text" id="input-nome" placeholder="Nome Completo" maxlength="120" required>
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-                        </div>
-
-                        <div class="campo">
-                            <input type="text" id="input-cpf" placeholder="CPF (000.000.000-00)" maxlength="14"
-                                required>
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-                        </div>
-
-                    </div>
-
-                    <div class="campo-foto-container">
-                        <label for="input-foto" class="btn-upload">
-                            Selecionar Foto
-                        </label>
-
-                        <input type="file" id="input-foto" accept="image/*" style="display:none;">
-
-                        <span id="nome-arquivo">
-                            Nenhum arquivo selecionado
-                        </span>
-
-                        <span id="erro-foto">
-                            Selecione uma foto, por favor
-                        </span>
-                    </div>
-                </fieldset>
-
-                <fieldset>
-                    <legend>Canais de Contato</legend>
-
-                    <div class="linha-formulario">
-
-                        <div class="campo">
-
-                            <input type="email" id="input-email" placeholder="E-mail" maxlength="254" required>
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-
-                        </div>
-
-                        <div class="campo">
-
-                            <input type="tel" id="input-telefone" placeholder="(00) 00000-0000" maxlength="15"
-                                inputmode="numeric" required>
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-
-                        </div>
-
-                    </div>
-                </fieldset>
-
-                <fieldset>
-                    <legend>Endereço</legend>
-
-                    <div class="linha-formulario">
-
-                        <div class="campo">
-                            <input type="text" id="input-cep" placeholder="00000-000" maxlength="9" inputmode="numeric"
-                                required>
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-                        </div>
-
-                        <div class="campo campo-removido">
-                            <input type="text" id="input-numero" placeholder="Número" maxlength="10">
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-                        </div>
-
-                    </div>
-
-                    <!-- Rua e Bairro na mesma linha -->
-                    <div class="linha-formulario">
-
-                        <div class="campo">
-
-                            <input type="text" id="input-logradouro" placeholder="Rua (ex.: Rua das Flores)"
-                                maxlength="100" required>
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-
-                        </div>
-
-                        <div class="campo">
-
-                            <input type="text" id="input-bairro" placeholder="Bairro" maxlength="80" required>
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div class="campo">
-
-                        <input type="text" id="input-complemento" placeholder="Complemento (Opcional)" maxlength="60">
-
-                    </div>
-
-                    <div class="linha-formulario campo-removido">
-
-                        <div class="campo">
-
-                            <input type="text" id="input-cidade" placeholder="Cidade" maxlength="80">
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div class="linha-formulario campo-removido" style="max-width:140px;">
-
-                        <div class="campo">
-
-                            <input type="text" id="input-uf" placeholder="UF" maxlength="2">
-
-                            <span class="erro-campo">
-                                Este campo é obrigatório.
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </fieldset>
-                <div class="acoes-formulario">
-
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-floppy-fill me-2"></i>
-                        Salvar
-                    </button>
-
-                    <button type="button" id="btn-excluir-cliente" class="btn btn-danger" style="display: none;">
-
-                        <i class="bi bi-trash-fill me-2"></i>
-                        Excluir Cliente
-
-                    </button>
-
-                    <button type="button" id="btn-cancelar" class="btn btn-secondary">
-
-                        <i class="bi bi-arrow-left me-2"></i>
-                        Voltar
-
-                    </button>
-
-                </div>
-            </form>
-        </section>
-
+          </form>
+        </div>
+      </div>
+    </section>
     </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>
