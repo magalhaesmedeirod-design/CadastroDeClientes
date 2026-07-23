@@ -24,8 +24,8 @@
   </nav>
 
   <div class="row g-0 min-vh-100">
-    <aside class="d-none d-lg-flex col-lg-3 col-xl-2 flex-column flex-shrink-0 p-3 text-bg-dark position-sticky top-0 vh-100">
-      <a class="d-flex align-items-center mb-4 text-white text-decoration-none fs-4 fw-semibold" href="#home" data-tela="home">
+    <aside id="sidebar" class="d-none d-lg-flex col-lg-3 col-xl-2 flex-column flex-shrink-0 p-3 text-bg-dark position-sticky top-0 vh-100">
+      <a class="d-flex align-items-center mb-4 ms-5 text-white text-decoration-none fs-4 fw-semibold" href="#home" data-tela="home">
         <i class="bi bi-speedometer2 me-2"></i>Painel
       </a>
       <hr class="mt-0">
@@ -44,7 +44,10 @@
       </div>
     </aside>
 
-    <main class="col-12 col-lg-9 col-xl-10 py-4 py-md-5 px-3 px-md-4 px-xxl-5">
+    <main id="conteudo-principal" class="col-12 col-lg-9 col-xl-10 d-flex flex-column py-4 py-md-5 px-3 px-md-4 px-xxl-5">
+    <button id="btn-toggle-sidebar" class="btn btn-dark border-secondary position-sticky top-0 align-self-start translate-middle-x z-3 shadow d-none d-lg-inline-flex" type="button" aria-label="Ocultar menu lateral" aria-expanded="true" onclick="alternarSidebar()">
+      <i class="bi bi-list fs-5"></i>
+    </button>
     <section id="tela-home"></section>
 
     <section id="tela-clientes" hidden>

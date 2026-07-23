@@ -8,6 +8,9 @@ const $ = (seletor) => document.querySelector(seletor);
 const inputs = Object.fromEntries(['id', 'nome', 'cpf', 'foto', 'email', 'telefone', 'cep', 'logradouro', 'bairro', 'cidade', 'complemento'].map(nome => [nome, $(`#input-${nome}`)]));
 const form = $('#form-cliente');
 const seletorIdioma = $('#input-idioma');
+const sidebar = $('#sidebar');
+const conteudoPrincipal = $('#conteudo-principal');
+const btnToggleSidebar = $('#btn-toggle-sidebar');
 
 function mostrarTela(nome, atualizarHash = true) {
   telas.forEach(tela => $(`#tela-${tela}`).hidden = tela !== nome);
@@ -162,5 +165,35 @@ seletorIdioma.addEventListener('change', () => {
   localStorage.setItem('idiomaSistema', seletorIdioma.value);
   document.documentElement.lang = seletorIdioma.value;
 });
+
+function ajustarSidebar(estaVisivel) {
+  sidebar.classList.toggle('d-lg-flex', estaVisivel);
+  sidebar.classList.toggle('d-lg-none', !estaVisivel);
+  conteudoPrincipal.classList.toggle('col-lg-9', estaVisivel);
+  conteudoPrincipal.classList.toggle('col-xl-10', estaVisivel);
+  conteudoPrincipal.classList.toggle('col-lg-12', !estaVisivel);
+
+  $('#tela-clientes').classList.toggle('col-lg-9', !estaVisivel);
+  $('#tela-clientes').classList.toggle('col-xl-10', !estaVisivel);
+  $('#tela-clientes').classList.toggle('mx-auto', !estaVisivel);
+
+  $('#tela-formulario').classList.toggle('col-lg-10', estaVisivel);
+  $('#tela-formulario').classList.toggle('col-xl-8', estaVisivel);
+  $('#tela-formulario').classList.toggle('col-xxl-7', estaVisivel);
+  $('#tela-formulario').classList.toggle('col-lg-8', !estaVisivel);
+  $('#tela-formulario').classList.toggle('col-xl-7', !estaVisivel);
+  $('#tela-formulario').classList.toggle('col-xxl-6', !estaVisivel);
+  btnToggleSidebar.classList.toggle('btn-dark', estaVisivel);
+  btnToggleSidebar.classList.toggle('border-secondary', estaVisivel);
+  btnToggleSidebar.classList.toggle('btn-warning', !estaVisivel);
+  btnToggleSidebar.classList.toggle('translate-middle-x', estaVisivel);
+  btnToggleSidebar.classList.toggle('ms-3', !estaVisivel);
+  btnToggleSidebar.setAttribute('aria-expanded', String(estaVisivel));
+  btnToggleSidebar.setAttribute('aria-label', estaVisivel ? 'Ocultar menu lateral' : 'Mostrar menu lateral');
+}
+
+window.alternarSidebar = function alternarSidebar() {
+  ajustarSidebar(sidebar.classList.contains('d-lg-none'));
+};
 window.addEventListener('hashchange', () => { const tela = window.location.hash.replace('#', ''); if (telas.includes(tela)) mostrarTela(tela, false); });
 mostrarTela(telas.includes(window.location.hash.replace('#', '')) ? window.location.hash.replace('#', '') : 'home', false);
