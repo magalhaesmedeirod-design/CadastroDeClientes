@@ -1,0 +1,25 @@
+[
+  {
+    "usuario": "magalhaesmedeirod",
+    "email": "magalhaesmedeirod@gmail.com",
+    "senha": "scrypt:32768:8:1$IATuiW9Lsf6cUZEj$169bdea110f42dba5a4bfdde966344e54836c5e95af6b57d217abb0a309f47c6cbea90a34dbe143b03cabef0349d646d6f02bc2c8af05d913932ddd2adb4c2a2"
+  },
+  {
+    "usuario": "admin",
+    "email": "danilomagalhaesmedeiro@gmail.com",
+    "senha": "scrypt:32768:8:1$Elp9J6GweRnLyAUE$a8aed3fa57031e1e86fa6efd39d3cf14b228243ec26b8786b0e65ede417fb08ab2a6c1efd43c7fd8c709da1baf8e54e0934a23f16e015c7092fd5b37578bc007",
+    "criado_em": "2026-07-24T12:48:33.353044+00:00",
+    "ultimo_login": null,
+    "total_logins": 0
+  },
+  {
+    "usuario": "alanjollanpoe",
+    "email": "alanjollanpoe@gmail.com",
+    "senha": "scrypt:32768:8:1$TOqzX5vMw3I1VCMj$b63fe6da64cbf28622d60e523342532648c705a70cfa73956e71489743940e6c119f26908c7082be86ae32ed09b51b378d35d6fb732cd3c0617cd2b47f885a79",
+    "criado_em": "2026-07-24T13:29:31.986241+00:00",
+    "ultimo_login": "2026-07-24T13:59:52.153951+00:00",
+    "total_logins": 2,
+    "superusuario": true,
+    "telefone": "(69) 98118-3028"
+  }
+]

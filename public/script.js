@@ -12,6 +12,14 @@ const sidebar = $('#sidebar');
 const conteudoPrincipal = $('#conteudo-principal');
 const btnToggleSidebar = $('#btn-toggle-sidebar');
 
+async function sairDoSistema() {
+  try {
+    await fetch('/api/logout', { method: 'POST' });
+  } finally {
+    window.location.assign('/');
+  }
+}
+
 function mostrarTela(nome, atualizarHash = true) {
   telas.forEach(tela => $(`#tela-${tela}`).hidden = tela !== nome);
   if (atualizarHash) window.location.hash = nome;
@@ -160,6 +168,7 @@ $('#btn-abrir-cadastro').addEventListener('click', novoCliente);
 $('#campo-busca').addEventListener('input', () => { paginaAtual = 1; renderizarClientes(); });
 form.addEventListener('submit', salvarCliente);
 $('#btn-excluir-cliente').addEventListener('click', excluirCliente);
+$('#btn-sair').addEventListener('click', sairDoSistema);
 seletorIdioma.value = localStorage.getItem('idiomaSistema') || 'pt-BR';
 seletorIdioma.addEventListener('change', () => {
   localStorage.setItem('idiomaSistema', seletorIdioma.value);

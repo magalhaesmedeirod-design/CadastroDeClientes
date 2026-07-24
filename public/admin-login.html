@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administração | Painel de Clientes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+</head>
+<body class="bg-dark">
+  <main class="container min-vh-100 d-flex align-items-center justify-content-center py-4">
+    <div class="row justify-content-center w-100"><div class="col-sm-10 col-md-8 col-lg-5 col-xl-4">
+      <div class="card border-secondary shadow-lg bg-body-tertiary"><div class="card-body p-4 p-md-5">
+        <div class="text-center mb-4"><div class="d-inline-flex align-items-center justify-content-center bg-dark text-white rounded-circle p-3 mb-3"><i class="bi bi-shield-lock-fill fs-3"></i></div>
+          <h1 class="h3 mb-1">Administração</h1><p class="text-body-secondary mb-0">Acesso exclusivo para superusuários.</p></div>
+        <div id="mensagem-login" class="alert alert-danger" role="alert" hidden></div>
+        <form id="form-login" novalidate>
+          <div class="mb-3"><label class="form-label" for="input-usuario">Usuário ou Gmail</label><div class="input-group"><span class="input-group-text"><i class="bi bi-person-badge"></i></span><input id="input-usuario" class="form-control" autocomplete="username" required autofocus></div></div>
+          <div class="mb-4"><label class="form-label" for="input-senha">Senha</label><div class="input-group"><span class="input-group-text"><i class="bi bi-lock"></i></span><input id="input-senha" class="form-control" type="password" autocomplete="current-password" required><button id="btn-mostrar-senha" class="btn btn-outline-secondary" type="button" aria-label="Mostrar senha"><i class="bi bi-eye"></i></button></div></div>
+          <button id="btn-entrar" class="btn btn-dark w-100" type="submit"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar na administração</button>
+        </form>
+        <a class="btn btn-outline-secondary w-100 mt-3" href="/admin/cadastro"><i class="bi bi-person-plus me-2"></i>Criar conta de superusuário</a>
+      </div></div>
+      <p class="text-center text-light-emphasis small mt-3 mb-0">Esta área não é exibida no acesso comum.</p>
+    </div></div>
+  </main><script src="/admin-login.js"></script>
+</body></html>
