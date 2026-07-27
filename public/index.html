@@ -3,130 +3,66 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Painel de Clientes</title>
+  <title>Minha conta | Painel de Clientes</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <style>
+    :root { --ink:#26323a; --muted:#69777d; --line:#dce5e6; --surface:#fff; --canvas:#f4f7f7; --accent:#39726c; --accent-soft:#e7f1ef; }
+    body { background:var(--canvas); color:var(--ink); }
+    .topbar { background:rgba(255,255,255,.92); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+    .brand-mark { width:38px; height:38px; display:inline-grid; place-items:center; border-radius:12px; background:var(--accent-soft); color:var(--accent); }
+    .nav-pills .nav-link { color:var(--muted); border-radius:10px; }
+    .nav-pills .nav-link.active, .nav-pills .nav-link:hover { background:var(--accent-soft); color:#245a55; }
+    .portal-card { background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:0 8px 24px rgba(41,61,65,.05); }
+    .metric-icon { width:46px; height:46px; display:grid; place-items:center; border-radius:14px; color:var(--accent); background:var(--accent-soft); }
+    .vehicle-item { cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .vehicle-item:hover { transform:translateY(-5px); border-color:#b9d5d0; box-shadow:0 14px 28px rgba(41,91,85,.12); }
+    .vehicle-table tbody tr { cursor:pointer; transition:background .18s ease, transform .18s ease; }
+    .vehicle-table tbody tr:hover { background:#f0f7f6; transform:translateY(-2px); }
+    .vehicle-photo { width:64px; height:48px; object-fit:cover; border-radius:10px; background:#edf2f2; }
+    .vehicle-card-photo { width:100%; height:150px; object-fit:cover; border-radius:12px; background:#edf2f2; }
+    .vehicle-photo:not(img), .vehicle-card-photo:not(img) { display:grid; place-items:center; }
+    .view-toggle .btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .detail-label { color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; }
+    .form-control:focus { border-color:#7eb3ab; box-shadow:0 0 0 .2rem rgba(57,114,108,.15); }
+  </style>
 </head>
-<body class="bg-body-tertiary">
-  <nav class="navbar navbar-dark bg-dark shadow-sm d-lg-none">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-semibold" href="#home"><i class="bi bi-people-fill me-2"></i>Painel</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal" aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menu">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="menuPrincipal">
-        <div class="navbar-nav pt-2">
-          <a class="nav-link" href="#home" data-tela="home"><i class="bi bi-house-door me-1"></i>Início</a>
-          <a class="nav-link" href="#clientes" data-tela="clientes"><i class="bi bi-person-vcard me-1"></i>Clientes</a>
-        </div>
+<body>
+  <nav class="topbar sticky-top">
+    <div class="container py-2 d-flex flex-wrap align-items-center gap-3">
+      <a class="text-decoration-none text-dark fw-semibold d-flex align-items-center gap-2 me-auto" href="#inicio" data-tela="inicio"><span class="brand-mark"><i class="bi bi-person-check-fill"></i></span>Minha conta</a>
+      <div class="nav nav-pills gap-1 order-3 order-md-2 w-100 w-md-auto">
+        <a class="nav-link" href="#inicio" data-tela="inicio"><i class="bi bi-house-door me-1"></i>Início</a>
+        <a class="nav-link" href="#veiculos" data-tela="veiculos"><i class="bi bi-car-front me-1"></i>Meus veículos</a>
+        <a class="nav-link" href="#perfil" data-tela="perfil"><i class="bi bi-person me-1"></i>Perfil</a>
       </div>
+      <button id="btn-sair" class="btn btn-outline-secondary btn-sm order-2 order-md-3"><i class="bi bi-box-arrow-right me-1"></i>Sair</button>
     </div>
   </nav>
 
-  <div class="row g-0 min-vh-100">
-    <aside id="sidebar" class="d-none d-lg-flex col-lg-3 col-xl-2 flex-column flex-shrink-0 p-3 text-bg-dark position-sticky top-0 vh-100">
-      <a class="d-flex align-items-center mb-4 ms-5 text-white text-decoration-none fs-4 fw-semibold" href="#home" data-tela="home">
-        <i class="bi bi-speedometer2 me-2"></i>Painel
-      </a>
-      <hr class="mt-0">
-      <div class="d-grid gap-2">
-        <button class="btn btn-outline-light text-start py-2" type="button" data-tela="home"><i class="bi bi-house-door-fill me-2"></i>Início</button>
-        <button class="btn btn-outline-light text-start py-2" type="button" data-tela="clientes"><i class="bi bi-people-fill me-2"></i>Clientes</button>
-      </div>
-      <div class="mt-auto pt-4">
-        <button id="btn-sair" class="btn btn-outline-light w-100 mb-3" type="button"><i class="bi bi-box-arrow-right me-2"></i>Sair</button>
-        <label class="form-label small" for="input-idioma">Idioma / Language</label>
-        <select id="input-idioma" class="form-select form-select-sm" aria-label="Escolher idioma">
-          <option value="pt-BR">Português</option>
-          <option value="en">English</option>
-          <option value="fr">Français</option>
-          <option value="zh-CN">中文</option>
-        </select>
-      </div>
-    </aside>
-
-    <main id="conteudo-principal" class="col-12 col-lg-9 col-xl-10 d-flex flex-column py-4 py-md-5 px-3 px-md-4 px-xxl-5">
-    <button id="btn-toggle-sidebar" class="btn btn-dark border-secondary position-sticky top-0 align-self-start translate-middle-x z-3 shadow d-none d-lg-inline-flex" type="button" aria-label="Ocultar menu lateral" aria-expanded="true" onclick="alternarSidebar()">
-      <i class="bi bi-list fs-5"></i>
-    </button>
-    <section id="tela-home"></section>
-
-    <section id="tela-clientes" hidden>
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-3 p-md-4">
-          <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-4">
-            <div>
-              <h1 class="h3 mb-1">Clientes</h1>
-              <p class="text-body-secondary mb-0" id="total-clientes"></p>
-            </div>
-            <button id="btn-abrir-cadastro" class="btn btn-success" type="button"><i class="bi bi-person-plus-fill me-2"></i>Adicionar cliente</button>
-          </div>
-          <div class="input-group mb-4">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input id="campo-busca" class="form-control" type="search" placeholder="Pesquisar por nome, cidade ou CPF" aria-label="Pesquisar clientes">
-          </div>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Telefone</th><th>Cidade</th></tr>
-              </thead>
-              <tbody id="linhas-tabela"></tbody>
-            </table>
-          </div>
-          <p id="sem-clientes" class="text-center text-body-secondary py-4 mb-0" hidden>Nenhum cliente encontrado.</p>
-          <nav class="mt-4" aria-label="Paginação de clientes">
-            <ul id="paginacao" class="pagination justify-content-center flex-wrap mb-0"></ul>
-          </nav>
-        </div>
-      </div>
+  <main class="container py-4 py-md-5">
+    <div id="alerta" class="alert alert-danger" hidden></div>
+    <section id="tela-inicio">
+      <div class="mb-4"><p class="text-secondary mb-1">Área do cliente</p><h1 class="h2 mb-1">Olá, <span id="nome-usuario">cliente</span>.</h1><p class="text-secondary mb-0">Consulte sua conta e os veículos cadastrados em seu nome.</p></div>
+      <div class="row g-3"><div class="col-md-6"><div class="portal-card p-4 h-100 d-flex gap-3"><span class="metric-icon"><i class="bi bi-car-front fs-4"></i></span><div><p class="text-secondary mb-1">Veículos cadastrados</p><div id="qtd-veiculos" class="display-6">—</div></div></div></div><div class="col-md-6"><div class="portal-card p-4 h-100 d-flex gap-3"><span class="metric-icon"><i class="bi bi-shield-check fs-4"></i></span><div><p class="text-secondary mb-1">Sua conta</p><div id="email-resumo" class="fw-semibold text-break">—</div></div></div></div></div>
     </section>
 
-    <section id="tela-formulario" class="col-12 col-lg-10 col-xl-8 col-xxl-7 mx-auto" hidden>
-      <div class="card border-0 shadow-sm">
-        <div class="card-body p-3 p-md-4">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 id="titulo-formulario" class="h3 mb-0">Cadastrar cliente</h1>
-            <button class="btn btn-outline-secondary" type="button" data-tela="clientes"><i class="bi bi-arrow-left me-2"></i>Voltar</button>
-          </div>
-          <div id="mensagem-formulario" class="alert" role="alert" hidden></div>
-          <form id="form-cliente" novalidate>
-            <input id="input-id" type="hidden">
-            <fieldset class="border rounded p-3 mb-4">
-              <legend class="float-none w-auto px-2 fs-6">Dados principais</legend>
-              <div class="row g-3">
-                <div class="col-md-8"><label class="form-label" for="input-nome">Nome completo</label><input class="form-control" id="input-nome" maxlength="60" required><div class="invalid-feedback"></div></div>
-                <div class="col-md-4"><label class="form-label" for="input-cpf">CPF</label><input class="form-control" id="input-cpf" maxlength="14" inputmode="numeric" placeholder="000.000.000-00" required><div class="invalid-feedback"></div></div>
-                <div class="col-12"><label class="form-label" for="input-foto">Foto (opcional)</label><input class="form-control" id="input-foto" type="file" accept="image/*"><div class="form-text" id="nome-arquivo">Nenhum arquivo selecionado.</div></div>
-              </div>
-            </fieldset>
-            <fieldset class="border rounded p-3 mb-4">
-              <legend class="float-none w-auto px-2 fs-6">Contato</legend>
-              <div class="row g-3">
-                <div class="col-md-6"><label class="form-label" for="input-email">E-mail</label><input class="form-control" id="input-email" type="email" maxlength="100" required><div class="invalid-feedback"></div></div>
-                <div class="col-md-6"><label class="form-label" for="input-telefone">Telefone</label><input class="form-control" id="input-telefone" maxlength="15" inputmode="numeric" placeholder="(00) 00000-0000" required><div class="invalid-feedback"></div></div>
-              </div>
-            </fieldset>
-            <fieldset class="border rounded p-3 mb-4">
-              <legend class="float-none w-auto px-2 fs-6">Endereço</legend>
-              <div class="row g-3">
-                <div class="col-md-4"><label class="form-label" for="input-cep">CEP</label><input class="form-control" id="input-cep" maxlength="9" inputmode="numeric" placeholder="00000-000" required><div class="invalid-feedback"></div></div>
-                <div class="col-md-8"><label class="form-label" for="input-logradouro">Logradouro</label><input class="form-control" id="input-logradouro" maxlength="60" required><div class="invalid-feedback"></div></div>
-                <div class="col-md-6"><label class="form-label" for="input-bairro">Bairro</label><input class="form-control" id="input-bairro" maxlength="40" required><div class="invalid-feedback"></div></div>
-                <div class="col-md-6"><label class="form-label" for="input-cidade">Cidade</label><input class="form-control" id="input-cidade" maxlength="40" required><div class="invalid-feedback"></div></div>
-                <div class="col-12"><label class="form-label" for="input-complemento">Complemento <span class="text-body-secondary">(opcional)</span></label><input class="form-control" id="input-complemento" maxlength="40"></div>
-              </div>
-            </fieldset>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-primary" type="submit"><i class="bi bi-floppy-fill me-2"></i>Salvar</button>
-              <button id="btn-excluir-cliente" class="btn btn-outline-danger" type="button" disabled><i class="bi bi-trash-fill me-2"></i>Excluir</button>
-            </div>
-          </form>
-        </div>
-      </div>
+    <section id="tela-veiculos" hidden>
+      <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-md-center mb-4"><div><p class="text-secondary mb-1">Seus veículos</p><h1 class="h2 mb-0">Veículos cadastrados</h1></div><div class="btn-group view-toggle" role="group" aria-label="Modo de visualização"><button id="btn-tabela" class="btn btn-outline-secondary active" type="button"><i class="bi bi-list-ul me-1"></i>Lista</button><button id="btn-cards" class="btn btn-outline-secondary" type="button"><i class="bi bi-grid-3x3-gap me-1"></i>Cards</button></div></div>
+      <div id="sem-veiculos" class="portal-card p-5 text-center" hidden><i class="bi bi-car-front fs-1 text-secondary"></i><h2 class="h5 mt-3">Nenhum veículo encontrado</h2><p class="text-secondary mb-0">Quando houver um veículo cadastrado em seu nome, ele aparecerá aqui.</p></div>
+      <div id="veiculos-tabela" class="portal-card table-responsive"><table class="table vehicle-table align-middle mb-0"><thead><tr><th class="ps-4">Veículo</th><th>Placa</th><th>Cor</th><th class="text-end pe-4">Detalhes</th></tr></thead><tbody id="linhas-veiculos"></tbody></table></div>
+      <div id="veiculos-cards" class="row g-3" hidden></div>
     </section>
-    </main>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js"></script>
+
+    <section id="tela-perfil" hidden>
+      <div class="row justify-content-center"><div class="col-lg-8"><div class="portal-card p-4 p-md-5"><div class="d-flex justify-content-between align-items-start gap-3 mb-4"><div><p class="text-secondary mb-1">Sua conta</p><h1 class="h2 mb-0">Perfil</h1></div><button id="btn-editar-perfil" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Alterar informações</button></div>
+        <dl id="perfil-visualizacao" class="row mb-0"><dt class="col-sm-4 detail-label">Usuário</dt><dd id="perfil-usuario-exibido" class="col-sm-8"></dd><dt class="col-sm-4 detail-label">E-mail</dt><dd id="perfil-email-exibido" class="col-sm-8"></dd><dt class="col-sm-4 detail-label">Senha</dt><dd class="col-sm-8">••••••••••••</dd></dl>
+        <form id="form-perfil" hidden><div class="mb-3"><label class="form-label" for="perfil-usuario">Usuário</label><input id="perfil-usuario" class="form-control" required></div><div class="mb-3"><label class="form-label" for="perfil-email">E-mail</label><input id="perfil-email" class="form-control" type="email" required></div><div class="mb-4"><label class="form-label" for="perfil-senha">Nova senha <span class="text-secondary">(opcional)</span></label><input id="perfil-senha" class="form-control" type="password" minlength="6" placeholder="Deixe em branco para manter a atual"></div><div class="d-flex gap-2"><button class="btn btn-success">Salvar alterações</button><button id="btn-cancelar-perfil" class="btn btn-outline-secondary" type="button">Cancelar</button></div></form>
+      </div></div></div>
+    </section>
+  </main>
+
+  <div class="modal fade" id="modal-veiculo" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow"><div class="modal-header"><h2 class="modal-title fs-5">Detalhes do veículo</h2><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="detalhes-veiculo"></div></div></div></div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script><script src="script.js"></script>
 </body>
 </html>

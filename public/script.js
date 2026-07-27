@@ -1,208 +1,30 @@
-const clientesPorPagina = 6;
-let clientes = [];
-let paginaAtual = 1;
-let fotoBase64 = '';
+const $ = seletor => document.querySelector(seletor);
+const telas = ['inicio', 'veiculos', 'perfil'];
+let perfil = null;
+let veiculos = [];
+let modoVeiculos = 'tabela';
 
-const telas = ['home', 'clientes', 'formulario'];
-const $ = (seletor) => document.querySelector(seletor);
-const inputs = Object.fromEntries(['id', 'nome', 'cpf', 'foto', 'email', 'telefone', 'cep', 'logradouro', 'bairro', 'cidade', 'complemento'].map(nome => [nome, $(`#input-${nome}`)]));
-const form = $('#form-cliente');
-const seletorIdioma = $('#input-idioma');
-const sidebar = $('#sidebar');
-const conteudoPrincipal = $('#conteudo-principal');
-const btnToggleSidebar = $('#btn-toggle-sidebar');
+function textoSeguro(valor) { const elemento = document.createElement('span'); elemento.textContent = valor ?? '—'; return elemento.innerHTML; }
+function mostrarErro(texto) { $('#alerta').textContent = texto; $('#alerta').hidden = false; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function ocultarErro() { $('#alerta').hidden = true; }
+async function requisicao(url, opcoes = {}) { const resposta = await fetch(url, opcoes); const dados = await resposta.json().catch(() => ({})); if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível concluir a operação.'); return dados; }
+function mostrarTela(tela, alterarHash = true) { telas.forEach(nome => $(`#tela-${nome}`).hidden = nome !== tela); document.querySelectorAll('[data-tela]').forEach(link => link.classList.toggle('active', link.dataset.tela === tela)); if (alterarHash) location.hash = tela; if (tela === 'veiculos') carregarVeiculos(); if (tela === 'perfil') carregarPerfil(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-async function sairDoSistema() {
-  try {
-    await fetch('/api/logout', { method: 'POST' });
-  } finally {
-    window.location.assign('/');
-  }
-}
+function fotoVeiculo(veiculo, classe) { return veiculo.foto ? `<img class="${classe}" src="${textoSeguro(veiculo.foto)}" alt="Foto do veículo">` : `<div class="${classe} d-grid place-items-center text-secondary"><i class="bi bi-car-front fs-3"></i></div>`; }
+function abrirDetalhes(id) { const veiculo = veiculos.find(item => item.id === id); if (!veiculo) return; $('#detalhes-veiculo').innerHTML = `${veiculo.foto ? `<img class="vehicle-card-photo mb-3" src="${textoSeguro(veiculo.foto)}" alt="Foto do veículo">` : ''}<div class="row g-3"><div class="col-6"><div class="detail-label">Placa</div><strong>${textoSeguro(veiculo.placa)}</strong></div><div class="col-6"><div class="detail-label">Cor</div><strong>${textoSeguro(veiculo.cor)}</strong></div><div class="col-6"><div class="detail-label">Marca</div><strong>${textoSeguro(veiculo.marca)}</strong></div><div class="col-6"><div class="detail-label">Modelo</div><strong>${textoSeguro(veiculo.modelo)}</strong></div><div class="col-6"><div class="detail-label">Ano de fabricação</div><strong>${textoSeguro(veiculo.ano_fabricacao)}</strong></div><div class="col-6"><div class="detail-label">Ano do modelo</div><strong>${textoSeguro(veiculo.ano_modelo)}</strong></div></div>`; bootstrap.Modal.getOrCreateInstance($('#modal-veiculo')).show(); }
+function renderizarVeiculos() { const vazio = veiculos.length === 0; $('#sem-veiculos').hidden = !vazio; $('#veiculos-tabela').hidden = vazio || modoVeiculos !== 'tabela'; $('#veiculos-cards').hidden = vazio || modoVeiculos !== 'cards'; $('#linhas-veiculos').innerHTML = veiculos.map(v => `<tr data-veiculo="${textoSeguro(v.id)}"><td class="ps-4"><div class="d-flex align-items-center gap-3">${fotoVeiculo(v, 'vehicle-photo')}<div><strong>${textoSeguro(v.marca)} ${textoSeguro(v.modelo)}</strong><div class="small text-secondary">${textoSeguro(v.ano_modelo)}</div></div></div></td><td>${textoSeguro(v.placa)}</td><td>${textoSeguro(v.cor)}</td><td class="text-end pe-4"><i class="bi bi-chevron-right text-secondary"></i></td></tr>`).join(''); $('#veiculos-cards').innerHTML = veiculos.map(v => `<div class="col-sm-6 col-lg-4"><article class="portal-card vehicle-item h-100 p-3" data-veiculo="${textoSeguro(v.id)}">${fotoVeiculo(v, 'vehicle-card-photo')}<div class="pt-3"><div class="d-flex justify-content-between gap-2"><h2 class="h5 mb-1">${textoSeguro(v.marca)} ${textoSeguro(v.modelo)}</h2><span class="badge text-bg-light border">${textoSeguro(v.placa)}</span></div><p class="text-secondary mb-0">${textoSeguro(v.cor)} · Modelo ${textoSeguro(v.ano_modelo)}</p></div></article></div>`).join(''); document.querySelectorAll('[data-veiculo]').forEach(item => item.onclick = () => abrirDetalhes(item.dataset.veiculo)); }
+async function carregarVeiculos() { try { veiculos = await requisicao('/api/meus-veiculos'); $('#qtd-veiculos').textContent = veiculos.length; renderizarVeiculos(); } catch (erro) { mostrarErro(erro.message); } }
 
-function mostrarTela(nome, atualizarHash = true) {
-  telas.forEach(tela => $(`#tela-${tela}`).hidden = tela !== nome);
-  if (atualizarHash) window.location.hash = nome;
-  if (nome === 'clientes') carregarClientes();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+function mostrarPerfil(edicao = false) { $('#perfil-visualizacao').hidden = edicao; $('#form-perfil').hidden = !edicao; if (!edicao && perfil) { $('#perfil-usuario-exibido').textContent = perfil.usuario; $('#perfil-email-exibido').textContent = perfil.email; } }
+async function carregarPerfil() { try { perfil = await requisicao('/api/meu-perfil'); $('#nome-usuario').textContent = perfil.usuario; $('#email-resumo').textContent = perfil.email; $('#perfil-usuario').value = perfil.usuario; $('#perfil-email').value = perfil.email; $('#perfil-senha').value = ''; mostrarPerfil(false); } catch (erro) { mostrarErro(erro.message); } }
+async function salvarPerfil(evento) { evento.preventDefault(); try { perfil = await requisicao('/api/meu-perfil', { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ usuario:$('#perfil-usuario').value, email:$('#perfil-email').value, senha:$('#perfil-senha').value }) }); $('#nome-usuario').textContent = perfil.usuario; $('#email-resumo').textContent = perfil.email; mostrarPerfil(false); } catch (erro) { mostrarErro(erro.message); } }
 
-function textoSeguro(valor) {
-  const elemento = document.createElement('span');
-  elemento.textContent = valor ?? '';
-  return elemento.innerHTML;
-}
-
-function clientesFiltrados() {
-  const termo = $('#campo-busca').value.trim().toLocaleLowerCase('pt-BR');
-  const cpfTermo = termo.replace(/\D/g, '');
-  if (!termo) return clientes;
-  return clientes.filter(cliente => {
-    const nome = (cliente.nome || '').toLocaleLowerCase('pt-BR');
-    const cidade = (cliente.cidade || '').toLocaleLowerCase('pt-BR');
-    const cpf = (cliente.cpf || '').replace(/\D/g, '');
-    return nome.includes(termo) || cidade.includes(termo) || (cpfTermo && cpf.includes(cpfTermo));
-  });
-}
-
-function renderizarClientes() {
-  const filtrados = clientesFiltrados();
-  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / clientesPorPagina));
-  paginaAtual = Math.min(paginaAtual, totalPaginas);
-  const inicio = (paginaAtual - 1) * clientesPorPagina;
-  const pagina = filtrados.slice(inicio, inicio + clientesPorPagina);
-  $('#total-clientes').textContent = `${filtrados.length} cliente${filtrados.length === 1 ? '' : 's'} encontrado${filtrados.length === 1 ? '' : 's'}.`;
-  $('#linhas-tabela').innerHTML = pagina.map(cliente => `
-    <tr><td><button class="btn btn-link p-0 text-start text-decoration-none" type="button" data-editar="${textoSeguro(cliente.id)}">${textoSeguro(cliente.nome)}</button></td>
-    <td>${textoSeguro(cliente.cpf || 'Não informado')}</td><td>${textoSeguro(cliente.email || '')}</td>
-    <td>${textoSeguro(cliente.telefone || '')}</td><td>${textoSeguro(cliente.cidade || 'Não informada')}</td></tr>`).join('');
-  $('#sem-clientes').hidden = pagina.length > 0;
-  $('#linhas-tabela').querySelectorAll('[data-editar]').forEach(botao => botao.addEventListener('click', () => editarCliente(botao.dataset.editar)));
-  renderizarPaginacao(totalPaginas);
-}
-
-function renderizarPaginacao(total) {
-  const itens = [];
-  const botao = (rotulo, pagina, desabilitado = false, ativo = false) => `<li class="page-item ${desabilitado ? 'disabled' : ''} ${ativo ? 'active' : ''}"><button class="page-link" type="button" data-pagina="${pagina}" ${desabilitado || ativo ? 'disabled' : ''}>${rotulo}</button></li>`;
-  itens.push(botao('Anterior', paginaAtual - 1, paginaAtual === 1));
-  for (let pagina = 1; pagina <= total; pagina++) itens.push(botao(pagina, pagina, false, pagina === paginaAtual));
-  itens.push(botao('Próxima', paginaAtual + 1, paginaAtual === total));
-  $('#paginacao').innerHTML = itens.join('');
-  $('#paginacao').querySelectorAll('[data-pagina]').forEach(botao => botao.addEventListener('click', () => { paginaAtual = Number(botao.dataset.pagina); renderizarClientes(); }));
-}
-
-async function carregarClientes() {
-  try {
-    const resposta = await fetch('/api/clientes');
-    if (!resposta.ok) throw new Error('Não foi possível carregar os clientes.');
-    clientes = await resposta.json();
-    renderizarClientes();
-  } catch (erro) {
-    $('#linhas-tabela').innerHTML = '';
-    $('#sem-clientes').hidden = false;
-    $('#sem-clientes').textContent = erro.message;
-  }
-}
-
-function limparValidacao() {
-  form.querySelectorAll('.is-invalid').forEach(campo => campo.classList.remove('is-invalid'));
-  $('#mensagem-formulario').hidden = true;
-}
-
-function novoCliente() {
-  form.reset(); limparValidacao(); fotoBase64 = '';
-  $('#nome-arquivo').textContent = 'Nenhum arquivo selecionado.';
-  $('#titulo-formulario').textContent = 'Cadastrar cliente';
-  $('#btn-excluir-cliente').disabled = true;
-  mostrarTela('formulario');
-}
-
-function editarCliente(id) {
-  const cliente = clientes.find(item => item.id === id);
-  if (!cliente) return;
-  limparValidacao();
-  Object.keys(inputs).forEach(campo => { if (campo !== 'foto') inputs[campo].value = cliente[campo] || ''; });
-  fotoBase64 = cliente.foto || '';
-  $('#nome-arquivo').textContent = fotoBase64 ? 'Imagem já salva no cadastro.' : 'Nenhum arquivo selecionado.';
-  $('#titulo-formulario').textContent = 'Editar cliente';
-  $('#btn-excluir-cliente').disabled = false;
-  mostrarTela('formulario');
-}
-
-function validarFormulario() {
-  limparValidacao();
-  let valido = true;
-  form.querySelectorAll('[required]').forEach(campo => {
-    if (!campo.value.trim()) { campo.classList.add('is-invalid'); campo.nextElementSibling.textContent = 'Este campo é obrigatório.'; valido = false; }
-  });
-  return valido;
-}
-
-function exibirMensagem(texto, tipo = 'danger') {
-  const mensagem = $('#mensagem-formulario');
-  mensagem.className = `alert alert-${tipo}`;
-  mensagem.textContent = texto;
-  mensagem.hidden = false;
-}
-
-async function salvarCliente(evento) {
-  evento.preventDefault();
-  if (!validarFormulario()) return;
-  const dados = Object.fromEntries(['nome', 'cpf', 'email', 'telefone', 'cep', 'logradouro', 'bairro', 'cidade', 'complemento'].map(campo => [campo, inputs[campo].value]));
-  dados.foto = fotoBase64;
-  const id = inputs.id.value;
-  try {
-    const resposta = await fetch(id ? `/api/clientes/${encodeURIComponent(id)}` : '/api/clientes', { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
-    const retorno = await resposta.json();
-    if (!resposta.ok) throw new Error(retorno.erro || 'Não foi possível salvar o cliente.');
-    mostrarTela('clientes');
-  } catch (erro) { exibirMensagem(erro.message); }
-}
-
-async function excluirCliente() {
-  const id = inputs.id.value;
-  if (!id || !window.confirm('Deseja excluir este cliente permanentemente?')) return;
-  try {
-    const resposta = await fetch(`/api/clientes/${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (!resposta.ok) throw new Error('Não foi possível excluir o cliente.');
-    mostrarTela('clientes');
-  } catch (erro) { exibirMensagem(erro.message); }
-}
-
-function aplicarMascara(campo, limite, formatar) { campo.addEventListener('input', () => { campo.value = formatar(campo.value.replace(/\D/g, '').slice(0, limite)); }); }
-aplicarMascara(inputs.cpf, 11, v => v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'));
-aplicarMascara(inputs.telefone, 11, v => v.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2'));
-aplicarMascara(inputs.cep, 8, v => v.replace(/^(\d{5})(\d)/, '$1-$2'));
-
-inputs.foto.addEventListener('change', () => {
-  const arquivo = inputs.foto.files[0];
-  if (!arquivo) { fotoBase64 = ''; $('#nome-arquivo').textContent = 'Nenhum arquivo selecionado.'; return; }
-  $('#nome-arquivo').textContent = arquivo.name;
-  const leitor = new FileReader();
-  leitor.addEventListener('load', () => { fotoBase64 = leitor.result; });
-  leitor.readAsDataURL(arquivo);
-});
-
-document.querySelectorAll('[data-tela]').forEach(elemento => elemento.addEventListener('click', () => mostrarTela(elemento.dataset.tela)));
-$('#btn-abrir-cadastro').addEventListener('click', novoCliente);
-$('#campo-busca').addEventListener('input', () => { paginaAtual = 1; renderizarClientes(); });
-form.addEventListener('submit', salvarCliente);
-$('#btn-excluir-cliente').addEventListener('click', excluirCliente);
-$('#btn-sair').addEventListener('click', sairDoSistema);
-seletorIdioma.value = localStorage.getItem('idiomaSistema') || 'pt-BR';
-seletorIdioma.addEventListener('change', () => {
-  localStorage.setItem('idiomaSistema', seletorIdioma.value);
-  document.documentElement.lang = seletorIdioma.value;
-});
-
-function ajustarSidebar(estaVisivel) {
-  sidebar.classList.toggle('d-lg-flex', estaVisivel);
-  sidebar.classList.toggle('d-lg-none', !estaVisivel);
-  conteudoPrincipal.classList.toggle('col-lg-9', estaVisivel);
-  conteudoPrincipal.classList.toggle('col-xl-10', estaVisivel);
-  conteudoPrincipal.classList.toggle('col-lg-12', !estaVisivel);
-
-  $('#tela-clientes').classList.toggle('col-lg-9', !estaVisivel);
-  $('#tela-clientes').classList.toggle('col-xl-10', !estaVisivel);
-  $('#tela-clientes').classList.toggle('mx-auto', !estaVisivel);
-
-  $('#tela-formulario').classList.toggle('col-lg-10', estaVisivel);
-  $('#tela-formulario').classList.toggle('col-xl-8', estaVisivel);
-  $('#tela-formulario').classList.toggle('col-xxl-7', estaVisivel);
-  $('#tela-formulario').classList.toggle('col-lg-8', !estaVisivel);
-  $('#tela-formulario').classList.toggle('col-xl-7', !estaVisivel);
-  $('#tela-formulario').classList.toggle('col-xxl-6', !estaVisivel);
-  btnToggleSidebar.classList.toggle('btn-dark', estaVisivel);
-  btnToggleSidebar.classList.toggle('border-secondary', estaVisivel);
-  btnToggleSidebar.classList.toggle('btn-warning', !estaVisivel);
-  btnToggleSidebar.classList.toggle('translate-middle-x', estaVisivel);
-  btnToggleSidebar.classList.toggle('ms-3', !estaVisivel);
-  btnToggleSidebar.setAttribute('aria-expanded', String(estaVisivel));
-  btnToggleSidebar.setAttribute('aria-label', estaVisivel ? 'Ocultar menu lateral' : 'Mostrar menu lateral');
-}
-
-window.alternarSidebar = function alternarSidebar() {
-  ajustarSidebar(sidebar.classList.contains('d-lg-none'));
-};
-window.addEventListener('hashchange', () => { const tela = window.location.hash.replace('#', ''); if (telas.includes(tela)) mostrarTela(tela, false); });
-mostrarTela(telas.includes(window.location.hash.replace('#', '')) ? window.location.hash.replace('#', '') : 'home', false);
+document.querySelectorAll('[data-tela]').forEach(link => link.onclick = () => { ocultarErro(); mostrarTela(link.dataset.tela); });
+$('#btn-tabela').onclick = () => { modoVeiculos = 'tabela'; $('#btn-tabela').classList.add('active'); $('#btn-cards').classList.remove('active'); renderizarVeiculos(); };
+$('#btn-cards').onclick = () => { modoVeiculos = 'cards'; $('#btn-cards').classList.add('active'); $('#btn-tabela').classList.remove('active'); renderizarVeiculos(); };
+$('#btn-editar-perfil').onclick = () => mostrarPerfil(true);
+$('#btn-cancelar-perfil').onclick = () => { $('#perfil-usuario').value = perfil.usuario; $('#perfil-email').value = perfil.email; $('#perfil-senha').value = ''; mostrarPerfil(false); };
+$('#form-perfil').onsubmit = salvarPerfil;
+$('#btn-sair').onclick = async () => { await fetch('/api/logout', {method:'POST'}); location.assign('/'); };
+window.addEventListener('hashchange', () => { const tela = location.hash.slice(1); if (telas.includes(tela)) mostrarTela(tela, false); });
+(async () => { await Promise.all([carregarPerfil(), carregarVeiculos()]); mostrarTela(telas.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'inicio', false); })();

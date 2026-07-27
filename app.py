@@ -4,6 +4,7 @@ from functools import wraps
 from flask import Flask, jsonify, request, send_from_directory, session
 import controladores
 import contas
+import banco_dados
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "troque-esta-chave-em-producao")
@@ -25,6 +26,16 @@ def admin_obrigatorio(funcao):
             return jsonify({"erro": "Acesso restrito a superusuários."}), 403
         return funcao(*args, **kwargs)
     return decorador
+
+
+def cliente_da_conta(usuario):
+    """Localiza o cadastro de cliente vinculado ao e-mail da conta."""
+    conta = contas.obter_conta_publica(usuario)
+    if not conta:
+        return None
+    email = str(conta.get("email", "")).strip().casefold()
+    return next((cliente for cliente in controladores.listar_clientes()
+                 if str(cliente.get("email", "")).strip().casefold() == email), None)
 
 # ---- ROTAS PARA CONECTAR O SEU FRONT-END ----
 @app.route("/")
@@ -204,18 +215,53 @@ def api_logout():
     session.clear()
     return jsonify({"mensagem": "Sessão encerrada."})
 
+
+@app.route("/api/meu-perfil", methods=["GET", "PUT"])
+@login_obrigatorio
+def api_meu_perfil():
+    if request.method == "GET":
+        return jsonify(contas.obter_conta_publica(session["usuario"]))
+    try:
+        cliente = cliente_da_conta(session["usuario"])
+        conta = contas.atualizar_conta(session["usuario"], request.get_json(silent=True) or {})
+        # A conta e o cadastro de cliente são vinculados pelo e-mail.
+        if cliente and cliente.get("email") != conta["email"]:
+            clientes = controladores.listar_clientes()
+            for item in clientes:
+                if item.get("id") == cliente.get("id"):
+                    item["email"] = conta["email"]
+                    break
+            banco_dados.salvar_registros(clientes)
+        session["usuario"] = conta["usuario"]
+        return jsonify(conta)
+    except contas.ErroConta as erro:
+        return jsonify({"erro": str(erro)}), 400
+
+
+@app.route("/api/meus-veiculos", methods=["GET"])
+@login_obrigatorio
+def api_meus_veiculos():
+    conta = contas.obter_conta_publica(session["usuario"])
+    if not conta:
+        return jsonify([])
+    email = str(conta.get("email", "")).strip().casefold()
+    cliente = cliente_da_conta(session["usuario"])
+    return jsonify([veiculo for veiculo in controladores.listar_veiculos()
+                    if str(veiculo.get("proprietario_email", "")).strip().casefold() == email
+                    or (cliente and veiculo.get("proprietario_id") == cliente.get("id"))])
+
 @app.route("/<path:path>")
 def servir_arquivos_front(path):
     return send_from_directory("public", path)
 
 # ---- ROTAS DA API QUE FAZEM O CRUD ----
 @app.route("/api/clientes", methods=["GET"])
-@login_obrigatorio
+@admin_obrigatorio
 def api_listar():
     return jsonify(controladores.listar_clientes())
 
 @app.route("/api/clientes", methods=["POST"])
-@login_obrigatorio
+@admin_obrigatorio
 def api_criar():
     try:
         novo_cliente = controladores.criar_cliente(request.get_json(silent=True) or {})
@@ -224,7 +270,7 @@ def api_criar():
         return jsonify({"erro": str(erro)}), 400
 
 @app.route("/api/clientes/<string:id_cliente>", methods=["PUT"])
-@login_obrigatorio
+@admin_obrigatorio
 def api_editar(id_cliente):
     try:
         cliente_atualizado = controladores.atualizar_cliente(id_cliente, request.get_json(silent=True) or {})
@@ -235,7 +281,7 @@ def api_editar(id_cliente):
     return jsonify({"erro": "Cliente nao encontrado"}), 404
 
 @app.route("/api/clientes/<string:id_cliente>", methods=["DELETE"])
-@login_obrigatorio
+@admin_obrigatorio
 def api_deletar(id_cliente):
     sucesso = controladores.deletar_cliente(id_cliente)
     if sucesso:

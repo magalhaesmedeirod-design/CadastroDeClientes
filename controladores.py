@@ -92,7 +92,8 @@ def validar_veiculo(dados):
     foto = str(dados.get("foto", "")).strip()
     if foto and not foto.startswith("data:image/"):
         raise ErroValidacao("A foto selecionada é inválida.")
-    return {**limpos, "placa": placa, "proprietario_nome": proprietario.get("nome", ""), "foto": foto}
+    return {**limpos, "placa": placa, "proprietario_nome": proprietario.get("nome", ""),
+            "proprietario_email": proprietario.get("email", ""), "foto": foto}
 
 
 def listar_veiculos():

@@ -34,13 +34,15 @@ function dadosCliente() { return Object.fromEntries(camposCliente.filter(c => c 
 async function salvarCliente(event) { event.preventDefault(); const id = clienteInput.id.value; try { await requisicao(id ? `/api/clientes/${encodeURIComponent(id)}` : '/api/clientes', {method: id ? 'PUT' : 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dadosCliente())}); mostrarTela('clientes'); } catch (e) { erro(e.message); } }
 async function excluirCliente() { const id = clienteInput.id.value; if (!id || !confirm('Deseja excluir este cliente permanentemente?')) return; try { await requisicao(`/api/clientes/${encodeURIComponent(id)}`, {method: 'DELETE'}); mostrarTela('clientes'); } catch (e) { erro(e.message); } }
 
-const camposVeiculo = ['id', 'placa', 'marca', 'modelo', 'ano_fabricacao', 'ano_modelo', 'cor', 'proprietario_id', 'foto'];
+const camposVeiculo = ['id', 'placa', 'marca', 'modelo', 'ano_fabricacao', 'ano_modelo', 'cor', 'proprietario_id', 'proprietario_email', 'foto'];
 const veiculoInput = Object.fromEntries(camposVeiculo.map(campo => [campo, $(`#veiculo-${campo}`)]));
 
 function preencherProprietarios(selecionado = '') {
   const opcoes = clientes.map(cliente => `<option value="${seguro(cliente.id)}">${seguro(cliente.nome)}</option>`).join('');
   veiculoInput.proprietario_id.innerHTML = '<option value="">Selecione um cliente</option>' + opcoes;
   veiculoInput.proprietario_id.value = selecionado;
+  const cliente = clientes.find(item => item.id === selecionado);
+  veiculoInput.proprietario_email.value = cliente ? cliente.email || '' : '';
 }
 function previewFotoVeiculo(foto = '') { $('#area-foto-veiculo').hidden = !foto; $('#preview-foto-veiculo').src = foto || ''; }
 function normalizarBusca(valor) { return String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
@@ -86,7 +88,7 @@ function alternarSenha(input, botao) { const visivel = input.type === 'text'; in
 
 document.querySelectorAll('[data-tela]').forEach(el => el.addEventListener('click', () => mostrarTela(el.dataset.tela)));
 $('#btn-atualizar').onclick = () => { limparErro(); carregarResumo(); }; $('#btn-novo-cliente').onclick = novoCliente; $('#busca-clientes').oninput = () => { paginaClientes = 1; renderizarClientes(); }; $('#form-cliente').onsubmit = salvarCliente; $('#btn-excluir-cliente').onclick = excluirCliente; $('#btn-novo-cliente-acesso').onclick = () => novoUsuario(false); $('#btn-novo-superusuario').onclick = () => novoUsuario(true); $('#form-usuario').onsubmit = salvarUsuario; $('#btn-excluir-usuario').onclick = excluirUsuario; $('#form-perfil').onsubmit = salvarPerfil; $('#btn-editar-perfil').onclick = () => exibirPerfil(true); $('#btn-cancelar-perfil').onclick = () => { $('#perfil-usuario').value = perfilAtual.usuario; $('#perfil-email').value = perfilAtual.email; $('#perfil-telefone').value = perfilAtual.telefone || ''; $('#perfil-senha').value = ''; exibirPerfil(false); };
-$('#btn-novo-veiculo').onclick = novoVeiculo; $('#busca-veiculos').oninput = () => { paginaVeiculos = 1; renderizarVeiculos(); }; $('#form-veiculo').onsubmit = salvarVeiculo; $('#btn-excluir-veiculo').onclick = excluirVeiculo;
+$('#btn-novo-veiculo').onclick = novoVeiculo; $('#busca-veiculos').oninput = () => { paginaVeiculos = 1; renderizarVeiculos(); }; $('#form-veiculo').onsubmit = salvarVeiculo; $('#btn-excluir-veiculo').onclick = excluirVeiculo; veiculoInput.proprietario_id.onchange = () => preencherProprietarios(veiculoInput.proprietario_id.value);
 $('#arquivo-foto-veiculo').onchange = event => { const arquivo = event.target.files[0]; if (!arquivo) return; if (arquivo.size > 5 * 1024 * 1024) { erro('A foto deve ter no máximo 5 MB.'); event.target.value = ''; return; } const leitor = new FileReader(); leitor.onload = () => { veiculoInput.foto.value = leitor.result; previewFotoVeiculo(leitor.result); }; leitor.readAsDataURL(arquivo); };
 $('#btn-ver-senha-usuario').onclick = () => alternarSenha($('#usuario-senha'), $('#btn-ver-senha-usuario')); $('#btn-ver-senha-perfil').onclick = () => alternarSenha($('#perfil-senha'), $('#btn-ver-senha-perfil'));
 $('#btn-sair-admin').onclick = async () => { await fetch('/api/logout', {method: 'POST'}); window.location.assign('/admin'); };
