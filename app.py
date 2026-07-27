@@ -169,7 +169,34 @@ def api_admin_perfil():
 @app.route("/api/admin/resumo", methods=["GET"])
 @admin_obrigatorio
 def api_admin_resumo():
-    return jsonify({"usuarios": contas.listar_contas_publicas(), "clientes": controladores.listar_clientes()})
+    return jsonify({"usuarios": contas.listar_contas_publicas(), "clientes": controladores.listar_clientes(), "veiculos": controladores.listar_veiculos()})
+
+
+@app.route("/api/admin/veiculos", methods=["GET", "POST"])
+@admin_obrigatorio
+def api_admin_veiculos():
+    if request.method == "GET":
+        return jsonify(controladores.listar_veiculos())
+    try:
+        return jsonify(controladores.criar_veiculo(request.get_json(silent=True) or {})), 201
+    except controladores.ErroValidacao as erro:
+        return jsonify({"erro": str(erro)}), 400
+
+
+@app.route("/api/admin/veiculos/<string:id_veiculo>", methods=["PUT", "DELETE"])
+@admin_obrigatorio
+def api_admin_gerenciar_veiculo(id_veiculo):
+    if request.method == "DELETE":
+        if controladores.deletar_veiculo(id_veiculo):
+            return jsonify({"mensagem": "Veículo removido com sucesso."})
+        return jsonify({"erro": "Veículo não encontrado."}), 404
+    try:
+        veiculo = controladores.atualizar_veiculo(id_veiculo, request.get_json(silent=True) or {})
+    except controladores.ErroValidacao as erro:
+        return jsonify({"erro": str(erro)}), 400
+    if veiculo:
+        return jsonify(veiculo)
+    return jsonify({"erro": "Veículo não encontrado."}), 404
 
 
 @app.route("/api/logout", methods=["POST"])
