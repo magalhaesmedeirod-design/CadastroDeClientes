@@ -13,7 +13,7 @@ app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "troque-esta-chave
 def login_obrigatorio(funcao):
     @wraps(funcao)
     def decorador(*args, **kwargs):
-        if not session.get("usuario"):
+        if not session.get("usuario_cliente"):
             return jsonify({"erro": "Sessão expirada. Faça login novamente."}), 401
         return funcao(*args, **kwargs)
     return decorador
@@ -22,7 +22,7 @@ def login_obrigatorio(funcao):
 def admin_obrigatorio(funcao):
     @wraps(funcao)
     def decorador(*args, **kwargs):
-        if not session.get("superusuario"):
+        if not session.get("usuario_admin") or not session.get("superusuario"):
             return jsonify({"erro": "Acesso restrito a superusuários."}), 403
         return funcao(*args, **kwargs)
     return decorador
@@ -40,7 +40,7 @@ def cliente_da_conta(usuario):
 # ---- ROTAS PARA CONECTAR O SEU FRONT-END ----
 @app.route("/")
 def index():
-    if not session.get("usuario"):
+    if not session.get("usuario_cliente"):
         return send_from_directory("public", "login.html")
     return send_from_directory("public", "index.html")
 
@@ -52,7 +52,7 @@ def cadastro():
 
 @app.route("/admin")
 def painel_admin():
-    if not session.get("superusuario"):
+    if not session.get("usuario_admin"):
         return send_from_directory("public", "admin-login.html")
     return send_from_directory("public", "admin.html")
 
@@ -61,14 +61,14 @@ def painel_admin():
 @app.route("/admin/<path:pagina>")
 def proteger_paginas_admin(pagina=None):
     """Evita que o painel seja aberto diretamente fora da rota protegida."""
-    if not session.get("superusuario"):
+    if not session.get("usuario_admin"):
         return send_from_directory("public", "admin-login.html")
     return send_from_directory("public", "admin.html")
 
 
 @app.route("/admin/cadastro")
 def cadastro_admin():
-    if session.get("superusuario"):
+    if session.get("usuario_admin"):
         return send_from_directory("public", "admin.html")
     if contas.existe_superusuario():
         return send_from_directory("public", "admin-login.html")
@@ -83,10 +83,8 @@ def api_login():
     conta = contas.autenticar(usuario, senha)
     if not conta:
         return jsonify({"erro": "Usuário ou senha inválidos."}), 401
-    session.clear()
-    session["usuario"] = conta["usuario"]
-    if conta.get("superusuario", False):
-        session["superusuario"] = True
+    session.pop("usuario", None)  # Remove apenas a sessão antiga, se existir.
+    session["usuario_cliente"] = conta["usuario"]
     contas.registrar_login(conta["usuario"])
     return jsonify({"mensagem": "Login realizado com sucesso."})
 
@@ -106,8 +104,8 @@ def api_admin_login():
     conta = contas.autenticar(dados.get("usuario", ""), str(dados.get("senha", "")), somente_superusuario=True)
     if not conta:
         return jsonify({"erro": "Credenciais de superusuário inválidas."}), 401
-    session.clear()
-    session["usuario"] = conta["usuario"]
+    session.pop("usuario", None)  # Compatibilidade com sessões anteriores.
+    session["usuario_admin"] = conta["usuario"]
     session["superusuario"] = True
     contas.registrar_login(conta["usuario"])
     return jsonify({"mensagem": "Login administrativo realizado com sucesso."})
@@ -115,7 +113,7 @@ def api_admin_login():
 
 @app.route("/api/admin/cadastro", methods=["POST"])
 def api_admin_cadastro():
-    if not session.get("superusuario") and contas.existe_superusuario():
+    if not session.get("usuario_admin") and contas.existe_superusuario():
         return jsonify({"erro": "Faça login como superusuário para criar outra conta administrativa."}), 403
     try:
         conta = contas.criar_conta(request.get_json(silent=True) or {}, superusuario=True)
@@ -149,15 +147,15 @@ def api_admin_criar_usuario():
 @admin_obrigatorio
 def api_admin_gerenciar_usuario(usuario):
     if request.method == "DELETE":
-        if usuario == session.get("usuario"):
+        if usuario == session.get("usuario_admin"):
             return jsonify({"erro": "Use a tela Meu perfil para alterar sua conta; não é possível excluir a própria sessão."}), 400
         if not contas.deletar_conta(usuario):
             return jsonify({"erro": "Usuário não encontrado."}), 404
         return jsonify({"mensagem": "Usuário removido com sucesso."})
     try:
         conta = contas.atualizar_conta(usuario, request.get_json(silent=True) or {}, permitir_alterar_tipo=True)
-        if usuario == session.get("usuario"):
-            session["usuario"] = conta["usuario"]
+        if usuario == session.get("usuario_admin"):
+            session["usuario_admin"] = conta["usuario"]
             session["superusuario"] = conta["superusuario"]
         return jsonify(conta)
     except contas.ErroConta as erro:
@@ -168,10 +166,10 @@ def api_admin_gerenciar_usuario(usuario):
 @admin_obrigatorio
 def api_admin_perfil():
     if request.method == "GET":
-        return jsonify(contas.obter_conta_publica(session["usuario"]))
+        return jsonify(contas.obter_conta_publica(session["usuario_admin"]))
     try:
-        conta = contas.atualizar_conta(session["usuario"], request.get_json(silent=True) or {})
-        session["usuario"] = conta["usuario"]
+        conta = contas.atualizar_conta(session["usuario_admin"], request.get_json(silent=True) or {})
+        session["usuario_admin"] = conta["usuario"]
         return jsonify(conta)
     except contas.ErroConta as erro:
         return jsonify({"erro": str(erro)}), 400
@@ -212,18 +210,25 @@ def api_admin_gerenciar_veiculo(id_veiculo):
 
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
-    session.clear()
+    session.pop("usuario_cliente", None)
     return jsonify({"mensagem": "Sessão encerrada."})
+
+
+@app.route("/api/admin/logout", methods=["POST"])
+def api_admin_logout():
+    session.pop("usuario_admin", None)
+    session.pop("superusuario", None)
+    return jsonify({"mensagem": "Sessão administrativa encerrada."})
 
 
 @app.route("/api/meu-perfil", methods=["GET", "PUT"])
 @login_obrigatorio
 def api_meu_perfil():
     if request.method == "GET":
-        return jsonify(contas.obter_conta_publica(session["usuario"]))
+        return jsonify(contas.obter_conta_publica(session["usuario_cliente"]))
     try:
-        cliente = cliente_da_conta(session["usuario"])
-        conta = contas.atualizar_conta(session["usuario"], request.get_json(silent=True) or {})
+        cliente = cliente_da_conta(session["usuario_cliente"])
+        conta = contas.atualizar_conta(session["usuario_cliente"], request.get_json(silent=True) or {})
         # A conta e o cadastro de cliente são vinculados pelo e-mail.
         if cliente and cliente.get("email") != conta["email"]:
             clientes = controladores.listar_clientes()
@@ -232,7 +237,7 @@ def api_meu_perfil():
                     item["email"] = conta["email"]
                     break
             banco_dados.salvar_registros(clientes)
-        session["usuario"] = conta["usuario"]
+        session["usuario_cliente"] = conta["usuario"]
         return jsonify(conta)
     except contas.ErroConta as erro:
         return jsonify({"erro": str(erro)}), 400
@@ -241,11 +246,11 @@ def api_meu_perfil():
 @app.route("/api/meus-veiculos", methods=["GET"])
 @login_obrigatorio
 def api_meus_veiculos():
-    conta = contas.obter_conta_publica(session["usuario"])
+    conta = contas.obter_conta_publica(session["usuario_cliente"])
     if not conta:
         return jsonify([])
     email = str(conta.get("email", "")).strip().casefold()
-    cliente = cliente_da_conta(session["usuario"])
+    cliente = cliente_da_conta(session["usuario_cliente"])
     return jsonify([veiculo for veiculo in controladores.listar_veiculos()
                     if str(veiculo.get("proprietario_email", "")).strip().casefold() == email
                     or (cliente and veiculo.get("proprietario_id") == cliente.get("id"))])
