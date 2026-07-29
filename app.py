@@ -178,7 +178,44 @@ def api_admin_perfil():
 @app.route("/api/admin/resumo", methods=["GET"])
 @admin_obrigatorio
 def api_admin_resumo():
-    return jsonify({"usuarios": contas.listar_contas_publicas(), "clientes": controladores.listar_clientes(), "veiculos": controladores.listar_veiculos()})
+    return jsonify({"usuarios": contas.listar_contas_publicas(), "clientes": controladores.listar_clientes(), "veiculos": controladores.listar_veiculos(), "apartamentos": controladores.listar_apartamentos(), "vagas": controladores.listar_vagas()})
+
+
+@app.route("/api/admin/apartamentos", methods=["GET", "POST"])
+@admin_obrigatorio
+def api_admin_apartamentos():
+    if request.method == "GET": return jsonify(controladores.listar_apartamentos())
+    try: return jsonify(controladores.criar_apartamento(request.get_json(silent=True) or {})), 201
+    except controladores.ErroValidacao as erro: return jsonify({"erro": str(erro)}), 400
+
+@app.route("/api/admin/apartamentos/<string:ident>", methods=["PUT", "DELETE"])
+@admin_obrigatorio
+def api_admin_gerenciar_apartamento(ident):
+    try:
+        if request.method == "DELETE":
+            if controladores.deletar_apartamento(ident): return jsonify({"mensagem": "Apartamento removido com sucesso."})
+            return jsonify({"erro": "Apartamento não encontrado."}), 404
+        item = controladores.atualizar_apartamento(ident, request.get_json(silent=True) or {})
+        return (jsonify(item), 200) if item else (jsonify({"erro": "Apartamento não encontrado."}), 404)
+    except controladores.ErroValidacao as erro: return jsonify({"erro": str(erro)}), 400
+
+@app.route("/api/admin/vagas", methods=["GET", "POST"])
+@admin_obrigatorio
+def api_admin_vagas():
+    if request.method == "GET": return jsonify(controladores.listar_vagas())
+    try: return jsonify(controladores.criar_vaga(request.get_json(silent=True) or {})), 201
+    except controladores.ErroValidacao as erro: return jsonify({"erro": str(erro)}), 400
+
+@app.route("/api/admin/vagas/<string:ident>", methods=["PUT", "DELETE"])
+@admin_obrigatorio
+def api_admin_gerenciar_vaga(ident):
+    try:
+        if request.method == "DELETE":
+            if controladores.deletar_vaga(ident): return jsonify({"mensagem": "Vaga removida com sucesso."})
+            return jsonify({"erro": "Vaga não encontrada."}), 404
+        item = controladores.atualizar_vaga(ident, request.get_json(silent=True) or {})
+        return (jsonify(item), 200) if item else (jsonify({"erro": "Vaga não encontrada."}), 404)
+    except controladores.ErroValidacao as erro: return jsonify({"erro": str(erro)}), 400
 
 
 @app.route("/api/admin/veiculos", methods=["GET", "POST"])
@@ -254,6 +291,24 @@ def api_meus_veiculos():
     return jsonify([veiculo for veiculo in controladores.listar_veiculos()
                     if str(veiculo.get("proprietario_email", "")).strip().casefold() == email
                     or (cliente and veiculo.get("proprietario_id") == cliente.get("id"))])
+
+
+@app.route("/api/meus-apartamentos", methods=["GET"])
+@login_obrigatorio
+def api_meus_apartamentos():
+    cliente = cliente_da_conta(session["usuario_cliente"])
+    if not cliente:
+        return jsonify([])
+    apartamentos = []
+    for apartamento in controladores.listar_apartamentos():
+        if apartamento.get("proprietario_id") == cliente.get("id"):
+            apartamentos.append({**apartamento, "vinculo": "proprietario"})
+        elif any(pessoa.get("id") == cliente.get("id") for pessoa in apartamento.get("pessoas", [])):
+            apartamentos.append({**apartamento, "vinculo": "morador"})
+    vagas = controladores.listar_vagas()
+    return jsonify([{**apartamento, "vagas": [vaga for vaga in vagas
+                                                if vaga.get("apartamento_id") == apartamento.get("id")]}
+                    for apartamento in apartamentos])
 
 @app.route("/<path:path>")
 def servir_arquivos_front(path):

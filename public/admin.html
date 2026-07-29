@@ -24,6 +24,7 @@
 <a class="nav-link" href="#clientes" data-tela="clientes">Clientes</a>
           <a class="nav-link" href="#veiculos" data-tela="veiculos">Veículos</a>
           <a class="nav-link" href="#usuarios" data-tela="usuarios">Usuários</a>
+<a class="nav-link" href="#apartamentos" data-tela="apartamentos">Apartamentos</a>
 <a class="nav-link" href="#perfil" data-tela="perfil">Meu perfil</a>
 </div>
 </div>
@@ -45,9 +46,10 @@
       <button class="btn btn-outline-light text-start" data-tela="veiculos">
         <i class="bi bi-car-front me-2"></i>Veículos
       </button>
-      <button class="btn btn-outline-light text-start" data-tela="usuarios">
+<button class="btn btn-outline-light text-start" data-tela="usuarios">
 <i class="bi bi-people me-2">
 </i>Usuários</button>
+<button class="btn btn-outline-light text-start" data-tela="apartamentos"><i class="bi bi-building me-2"></i>Apartamentos</button>
 <button class="btn btn-outline-light text-start" data-tela="perfil">
 <i class="bi bi-person-gear me-2">
 </i>Meu perfil</button>
@@ -56,6 +58,7 @@
 <button id="btn-sair-admin" class="btn btn-outline-light w-100 mb-3">
 <i class="bi bi-box-arrow-right me-2">
 </i>Sair</button>
+<div class="dropdown mb-3"><button class="btn btn-outline-light w-100 text-start dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-palette me-2"></i>Temas</button><ul class="dropdown-menu dropdown-menu-dark w-100"><li><button class="dropdown-item" data-tema-admin="noite">Noite esmeralda</button></li><li><button class="dropdown-item" data-tema-admin="grafite">Grafite azul</button></li><li><button class="dropdown-item" data-tema-admin="claro">Claro sereno</button></li><li><button class="dropdown-item" data-tema-admin="lavanda">Lavanda suave</button></li></ul></div>
 <label class="form-label small" for="input-idioma">Idioma / Language</label>
 <select id="input-idioma" class="form-select form-select-sm">
 <option value="pt-BR">Português</option>
@@ -157,6 +160,7 @@
 </div>
 <form id="form-cliente" novalidate>
 <input id="cliente-id" type="hidden">
+<input id="cliente-foto" type="hidden">
 <div class="row g-3">
 <div class="col-md-8">
 <label class="form-label">Nome completo</label>
@@ -194,6 +198,8 @@
 <label class="form-label">Complemento</label>
 <input id="cliente-complemento" class="form-control">
 </div>
+<div class="col-md-5"><label class="form-label d-block">Foto do cliente</label><input id="arquivo-foto-cliente" class="form-control" type="file" accept="image/*"><small class="text-body-secondary">Opcional, até 5 MB.</small></div>
+<div class="col-md-7" id="area-foto-cliente" hidden><img id="preview-foto-cliente" class="img-thumbnail" style="max-width:220px;max-height:160px" alt="Prévia da foto do cliente"></div>
 </div>
 <div class="mt-4 d-flex gap-2">
 <button class="btn btn-primary">Salvar</button>
@@ -214,6 +220,10 @@
   <div class="card border-0 shadow-sm mx-auto" style="max-width:900px"><div class="card-body p-3 p-md-4"><div class="d-flex justify-content-between mb-4"><h1 id="titulo-veiculo" class="h3 mb-0">Cadastrar veículo</h1><button class="btn btn-outline-secondary" data-tela="veiculos">Voltar</button></div>
   <form id="form-veiculo" novalidate><input id="veiculo-id" type="hidden"><input id="veiculo-foto" type="hidden"><div class="row g-3"><div class="col-md-4"><label class="form-label">Placa</label><input id="veiculo-placa" class="form-control text-uppercase" maxlength="8" placeholder="ABC1D23" required></div><div class="col-md-4"><label class="form-label">Marca</label><input id="veiculo-marca" class="form-control" required></div><div class="col-md-4"><label class="form-label">Modelo</label><input id="veiculo-modelo" class="form-control" required></div><div class="col-md-4"><label class="form-label">Ano de fabricação</label><input id="veiculo-ano_fabricacao" class="form-control" inputmode="numeric" maxlength="4" placeholder="2024" required></div><div class="col-md-4"><label class="form-label">Ano do modelo</label><input id="veiculo-ano_modelo" class="form-control" inputmode="numeric" maxlength="4" placeholder="2025" required></div><div class="col-md-4"><label class="form-label">Cor principal</label><input id="veiculo-cor" class="form-control" required></div><div class="col-md-6"><label class="form-label">Proprietário</label><select id="veiculo-proprietario_id" class="form-select" required><option value="">Selecione um cliente</option></select></div><div class="col-md-6"><label class="form-label">E-mail do proprietário</label><input id="veiculo-proprietario_email" class="form-control" type="email" readonly></div><div class="col-md-4"><label class="form-label d-block">Foto do veículo</label><input id="arquivo-foto-veiculo" class="form-control" type="file" accept="image/*"><small class="text-body-secondary">Opcional</small></div><div class="col-12" id="area-foto-veiculo" hidden><img id="preview-foto-veiculo" class="img-thumbnail" style="max-width:220px;max-height:160px" alt="Prévia da foto do veículo"></div></div><div class="mt-4 d-flex gap-2"><button class="btn btn-primary">Salvar</button><button id="btn-excluir-veiculo" class="btn btn-outline-danger" type="button" hidden>Excluir</button></div></form></div></div>
 </section>
+<section id="tela-apartamentos" hidden><div class="card border-0 shadow-sm"><div class="card-body p-3 p-md-4"><div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4"><div><h1 class="h3 mb-1">Apartamentos</h1><p id="total-apartamentos" class="text-body-secondary mb-0"></p></div><div class="d-flex gap-2"><button id="btn-nova-vaga" class="btn btn-outline-success">Adicionar vaga</button><button id="btn-novo-apartamento" class="btn btn-success">Adicionar apartamento</button></div></div><div class="input-group mb-3"><span class="input-group-text"><i class="bi bi-search"></i></span><input id="busca-apartamentos" class="form-control" placeholder="Pesquisar por número, andar, proprietário ou pessoa"></div><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Número</th><th>Andar</th><th>Proprietário</th><th>Pessoas atribuídas</th></tr></thead><tbody id="linhas-apartamentos"></tbody></table></div><p id="sem-apartamentos" class="text-center text-body-secondary py-4 mb-0" hidden>Nenhum apartamento encontrado.</p><nav class="mt-3"><ul id="paginacao-apartamentos" class="pagination justify-content-center flex-wrap mb-0"></ul></nav></div></div></section>
+<section id="tela-form-apartamento" hidden><div class="card border-0 shadow-sm mx-auto" style="max-width:900px"><div class="card-body p-3 p-md-4"><div class="d-flex justify-content-between mb-4"><h1 id="titulo-apartamento" class="h3 mb-0">Cadastrar apartamento</h1><button class="btn btn-outline-secondary" data-tela="apartamentos">Voltar</button></div><form id="form-apartamento"><input id="apartamento-id" type="hidden"><div class="row g-3"><div class="col-md-6"><label class="form-label">Número do apartamento</label><input id="apartamento-numero" class="form-control" maxlength="20" required></div><div class="col-md-6"><label class="form-label">Andar</label><input id="apartamento-andar" class="form-control" maxlength="10" placeholder="Ex.: 1" required></div><div class="col-12"><label class="form-label">Proprietário</label><select id="apartamento-proprietario_id" class="form-select" required></select></div><div class="col-md-8"><label class="form-label">Pessoa atribuída</label><select id="apartamento-pessoa-selecao" class="form-select"></select></div><div class="col-md-4 d-flex align-items-end"><button id="btn-adicionar-pessoa" type="button" class="btn btn-outline-success w-100">Adicionar pessoa</button></div><div class="col-12"><label class="form-label">Pessoas atribuídas</label><div id="lista-pessoas-apartamento" class="d-flex flex-wrap gap-2"></div></div></div><div class="mt-4 d-flex gap-2"><button class="btn btn-primary">Salvar</button><button id="btn-excluir-apartamento" type="button" class="btn btn-outline-danger" hidden>Excluir</button></div></form><div id="area-vagas-apartamento" class="mt-5 pt-4 border-top" hidden><div class="d-flex justify-content-between align-items-center gap-2 mb-3"><div><h2 class="h4 mb-1">Vagas deste apartamento</h2><p class="text-body-secondary mb-0">Clique em uma vaga para ver ou editar os detalhes.</p></div><button id="btn-adicionar-vaga-apartamento" class="btn btn-success">Adicionar vaga</button></div><div id="cards-vagas-apartamento" class="row g-3"></div></div></div></div></section>
+<section id="tela-vagas" hidden><div class="card border-0 shadow-sm"><div class="card-body p-3 p-md-4"><div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4"><div><h1 class="h3 mb-1">Vagas</h1><p id="total-vagas" class="text-body-secondary mb-0"></p></div><button id="btn-nova-vaga" class="btn btn-success">Adicionar vaga</button></div><div class="input-group mb-3"><span class="input-group-text"><i class="bi bi-search"></i></span><input id="busca-vagas" class="form-control" placeholder="Pesquisar por vaga, apartamento, proprietário ou veículo"></div><div class="table-responsive"><table class="table table-hover"><thead><tr><th>Vaga</th><th>Apartamento</th><th>Proprietário</th><th>Veículos</th></tr></thead><tbody id="linhas-vagas"></tbody></table></div><p id="sem-vagas" class="text-center text-body-secondary py-4 mb-0" hidden>Nenhuma vaga encontrada.</p><nav class="mt-3"><ul id="paginacao-vagas" class="pagination justify-content-center flex-wrap mb-0"></ul></nav></div></div></section>
+<section id="tela-form-vaga" hidden><div class="card border-0 shadow-sm mx-auto" style="max-width:900px"><div class="card-body p-3 p-md-4"><div class="d-flex justify-content-between mb-4"><h1 id="titulo-vaga" class="h3 mb-0">Cadastrar vaga</h1><button class="btn btn-outline-secondary" data-tela="vagas">Voltar</button></div><form id="form-vaga"><input id="vaga-id" type="hidden"><div class="row g-3"><div class="col-md-6"><label class="form-label">Número da vaga</label><input id="vaga-numero" class="form-control" maxlength="20" placeholder="Ex.: A1" required></div><div class="col-md-6"><label class="form-label">Número do apartamento</label><select id="vaga-apartamento_id" class="form-select" required></select></div><div class="col-12"><label class="form-label">Proprietário do apartamento</label><input id="vaga-proprietario_nome" class="form-control" readonly></div><div class="col-md-8"><label class="form-label">Veículo</label><select id="vaga-veiculo-selecao" class="form-select"></select></div><div class="col-md-4 d-flex align-items-end"><button id="btn-adicionar-veiculo-vaga" type="button" class="btn btn-outline-success w-100">Adicionar veículo</button></div><div class="col-12"><label class="form-label">Veículos atribuídos</label><div id="lista-veiculos-vaga" class="d-flex flex-wrap gap-2"></div></div></div><div class="mt-4 d-flex gap-2"><button class="btn btn-primary">Salvar</button><button id="btn-excluir-vaga" type="button" class="btn btn-outline-danger" hidden>Excluir</button></div></form></div></div></section>
 <section id="tela-usuarios" hidden>
 <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
 <div>

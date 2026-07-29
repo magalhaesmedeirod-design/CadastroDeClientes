@@ -1,0 +1,32 @@
+[
+  {
+    "numero": "101",
+    "andar": "1",
+    "proprietario_id": "1784237024818",
+    "proprietario_nome": "Danilo Magalhães Medeiro",
+    "pessoas": [
+      {
+        "id": "1784290166714",
+        "nome": "Eliza magalhães Medeiro"
+      },
+      {
+        "id": "1784300265438",
+        "nome": "Eliane Aparecida de Magalhães"
+      }
+    ],
+    "id": "1785329101214"
+  },
+  {
+    "numero": "103",
+    "andar": "1",
+    "proprietario_id": "1784300685173",
+    "proprietario_nome": "Tate McRae",
+    "pessoas": [
+      {
+        "id": "1784300844337",
+        "nome": "Gracie Abrams"
+      }
+    ],
+    "id": "1785330752097"
+  }
+]

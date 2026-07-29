@@ -27,7 +27,10 @@ def validar_dados(dados):
     cep = somente_digitos(dados.get("cep"))
     if len(cep) != 8:
         raise ErroValidacao("CEP deve seguir o formato 00000-000.")
-    return {**dados, **limpos, "cpf": f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}", "telefone": f"({telefone[:2]}) {telefone[2:7]}-{telefone[7:]}", "cep": f"{cep[:5]}-{cep[5:]}"}
+    foto = str(dados.get("foto", "")).strip()
+    if foto and not foto.startswith("data:image/"):
+        raise ErroValidacao("A foto selecionada é inválida.")
+    return {**limpos, "foto": foto, "cpf": f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}", "telefone": f"({telefone[:2]}) {telefone[2:7]}-{telefone[7:]}", "cep": f"{cep[:5]}-{cep[5:]}"}
 
 def listar_clientes():
     return banco_dados.ler_registros()
@@ -132,3 +135,104 @@ def deletar_veiculo(id_veiculo):
         banco_dados.salvar_veiculos(nova_lista)
         return True
     return False
+
+
+def _texto(dados, campo, limite, rotulo=None):
+    valor = str(dados.get(campo, "")).strip()
+    if not valor:
+        raise ErroValidacao(f"{rotulo or campo.capitalize()} é obrigatório.")
+    if len(valor) > limite:
+        raise ErroValidacao(f"{rotulo or campo.capitalize()} ultrapassa o limite de {limite} caracteres.")
+    return valor
+
+
+def _clientes_por_ids(ids, proprietario_id=None, apartamento_atual=None):
+    clientes = {cliente.get("id"): cliente for cliente in listar_clientes()}
+    if not isinstance(ids, list) or not ids:
+        raise ErroValidacao("Selecione ao menos uma pessoa atribuída.")
+    if len(ids) != len(set(ids)):
+        raise ErroValidacao("Uma pessoa não pode ser adicionada duas vezes.")
+    resultado = []
+    apartamentos = banco_dados.ler_apartamentos()
+    for ident in ids:
+        cliente = clientes.get(str(ident))
+        if not cliente:
+            raise ErroValidacao("Uma das pessoas selecionadas não está mais cadastrada.")
+        # O proprietário pode ter mais de um imóvel; os demais moradores, não.
+        if cliente["id"] != proprietario_id and any(
+            apartamento.get("id") != apartamento_atual
+            and any(pessoa.get("id") == cliente["id"] for pessoa in apartamento.get("pessoas", []))
+            for apartamento in apartamentos
+        ):
+            raise ErroValidacao(f"{cliente.get('nome', 'Esta pessoa')} já está atribuído a outro apartamento.")
+        resultado.append({"id": cliente["id"], "nome": cliente.get("nome", "")})
+    return resultado
+
+
+def _validar_apartamento(dados, apartamento_atual=None):
+    numero = _texto(dados, "numero", 20, "Número do apartamento")
+    andar = _texto(dados, "andar", 10, "Andar")
+    proprietario_id = _texto(dados, "proprietario_id", 30, "Proprietário")
+    cliente = next((c for c in listar_clientes() if c.get("id") == proprietario_id), None)
+    if not cliente:
+        raise ErroValidacao("Selecione um proprietário cadastrado.")
+    pessoas = _clientes_por_ids(dados.get("pessoas_ids"), cliente["id"], apartamento_atual)
+    return {"numero": numero, "andar": andar, "proprietario_id": cliente["id"], "proprietario_nome": cliente.get("nome", ""), "pessoas": pessoas}
+
+
+def listar_apartamentos(): return banco_dados.ler_apartamentos()
+
+def criar_apartamento(dados):
+    registros = listar_apartamentos(); novo = _validar_apartamento(dados)
+    if any(r.get("numero", "").casefold() == novo["numero"].casefold() for r in registros):
+        raise ErroValidacao("Já existe um apartamento com este número.")
+    novo["id"] = str(int(time.time() * 1000)); registros.append(novo); banco_dados.salvar_apartamentos(registros); return novo
+
+def atualizar_apartamento(ident, dados):
+    registros = listar_apartamentos(); novo = _validar_apartamento(dados, ident)
+    if any(r.get("id") != ident and r.get("numero", "").casefold() == novo["numero"].casefold() for r in registros):
+        raise ErroValidacao("Já existe um apartamento com este número.")
+    for i, registro in enumerate(registros):
+        if registro.get("id") == ident:
+            novo["id"] = ident; registros[i] = novo; banco_dados.salvar_apartamentos(registros); return novo
+    return None
+
+def deletar_apartamento(ident):
+    if any(vaga.get("apartamento_id") == ident for vaga in banco_dados.ler_vagas()):
+        raise ErroValidacao("Remova primeiro as vagas deste apartamento.")
+    registros = listar_apartamentos(); novos = [r for r in registros if r.get("id") != ident]
+    if len(novos) == len(registros): return False
+    banco_dados.salvar_apartamentos(novos); return True
+
+
+def _validar_vaga(dados, ident_atual=None):
+    numero = _texto(dados, "numero", 20, "Número da vaga")
+    apartamento_id = _texto(dados, "apartamento_id", 30, "Apartamento")
+    apartamento = next((a for a in listar_apartamentos() if a.get("id") == apartamento_id), None)
+    if not apartamento: raise ErroValidacao("Selecione um apartamento cadastrado.")
+    veiculos_ids = dados.get("veiculos_ids")
+    if not isinstance(veiculos_ids, list) or not veiculos_ids: raise ErroValidacao("Selecione ao menos um veículo.")
+    if len(veiculos_ids) != len(set(veiculos_ids)): raise ErroValidacao("Um veículo não pode ser adicionado duas vezes.")
+    veiculos = {v.get("id"): v for v in listar_veiculos()}; selecionados = []
+    for veiculo_id in veiculos_ids:
+        veiculo = veiculos.get(str(veiculo_id))
+        if not veiculo: raise ErroValidacao("Um dos veículos selecionados não está mais cadastrado.")
+        selecionados.append({"id": veiculo["id"], "placa": veiculo.get("placa", ""), "modelo": veiculo.get("modelo", "")})
+    return {"numero": numero, "apartamento_id": apartamento["id"], "apartamento_numero": apartamento.get("numero", ""), "proprietario_id": apartamento.get("proprietario_id", ""), "proprietario_nome": apartamento.get("proprietario_nome", ""), "veiculos": selecionados}
+
+def listar_vagas(): return banco_dados.ler_vagas()
+def criar_vaga(dados):
+    registros = listar_vagas(); novo = _validar_vaga(dados)
+    if any(r.get("numero", "").casefold() == novo["numero"].casefold() for r in registros): raise ErroValidacao("Esta vaga já pertence a outro apartamento.")
+    novo["id"] = str(int(time.time() * 1000)); registros.append(novo); banco_dados.salvar_vagas(registros); return novo
+def atualizar_vaga(ident, dados):
+    registros = listar_vagas(); novo = _validar_vaga(dados, ident)
+    if any(r.get("id") != ident and r.get("numero", "").casefold() == novo["numero"].casefold() for r in registros): raise ErroValidacao("Esta vaga já pertence a outro apartamento.")
+    for i, registro in enumerate(registros):
+        if registro.get("id") == ident:
+            novo["id"] = ident; registros[i] = novo; banco_dados.salvar_vagas(registros); return novo
+    return None
+def deletar_vaga(ident):
+    registros = listar_vagas(); novos = [r for r in registros if r.get("id") != ident]
+    if len(novos) == len(registros): return False
+    banco_dados.salvar_vagas(novos); return True

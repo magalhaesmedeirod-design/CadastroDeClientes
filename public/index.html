@@ -34,9 +34,11 @@
       <div class="nav nav-pills gap-1 order-3 order-md-2 w-100 w-md-auto">
         <a class="nav-link" href="#inicio" data-tela="inicio"><i class="bi bi-house-door me-1"></i>Início</a>
         <a class="nav-link" href="#veiculos" data-tela="veiculos"><i class="bi bi-car-front me-1"></i>Meus veículos</a>
+        <a class="nav-link" href="#apartamentos" data-tela="apartamentos"><i class="bi bi-building me-1"></i>Meus apartamentos</a>
         <a class="nav-link" href="#perfil" data-tela="perfil"><i class="bi bi-person me-1"></i>Perfil</a>
       </div>
       <button id="btn-sair" class="btn btn-outline-secondary btn-sm order-2 order-md-3"><i class="bi bi-box-arrow-right me-1"></i>Sair</button>
+      <div class="dropdown order-2 order-md-3"><button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-palette me-1"></i>Temas</button><ul class="dropdown-menu dropdown-menu-end"><li><button class="dropdown-item" data-tema-cliente="sereno">Claro sereno</button></li><li><button class="dropdown-item" data-tema-cliente="lavanda">Lavanda suave</button></li><li><button class="dropdown-item" data-tema-cliente="noite">Noite esmeralda</button></li><li><button class="dropdown-item" data-tema-cliente="grafite">Grafite azul</button></li></ul></div>
     </div>
   </nav>
 
@@ -52,6 +54,12 @@
       <div id="sem-veiculos" class="portal-card p-5 text-center" hidden><i class="bi bi-car-front fs-1 text-secondary"></i><h2 class="h5 mt-3">Nenhum veículo encontrado</h2><p class="text-secondary mb-0">Quando houver um veículo cadastrado em seu nome, ele aparecerá aqui.</p></div>
       <div id="veiculos-tabela" class="portal-card table-responsive"><table class="table vehicle-table align-middle mb-0"><thead><tr><th class="ps-4">Veículo</th><th>Placa</th><th>Cor</th><th class="text-end pe-4">Detalhes</th></tr></thead><tbody id="linhas-veiculos"></tbody></table></div>
       <div id="veiculos-cards" class="row g-3" hidden></div>
+    </section>
+
+    <section id="tela-apartamentos" hidden>
+      <div class="mb-4"><p class="text-secondary mb-1">Seus imóveis</p><h1 class="h2 mb-0">Apartamentos e vagas</h1></div>
+      <div id="sem-apartamentos" class="portal-card p-5 text-center" hidden><i class="bi bi-building fs-1 text-secondary"></i><h2 class="h5 mt-3">Nenhum apartamento encontrado</h2><p class="text-secondary mb-0">Quando houver um apartamento cadastrado em seu nome, ele aparecerá aqui.</p></div>
+      <div id="lista-apartamentos" class="row g-3"></div>
     </section>
 
     <section id="tela-perfil" hidden>
