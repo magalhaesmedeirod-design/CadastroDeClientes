@@ -181,3 +181,12 @@ html[data-tema-admin="claro"] .btn-success,html[data-tema-admin="claro"] .btn-pr
 html[data-tema-admin="lavanda"] .btn-success,html[data-tema-admin="lavanda"] .btn-primary{background:#ad5f8d;border-color:#ad5f8d}html[data-tema-admin="lavanda"] .btn-success:hover,html[data-tema-admin="lavanda"] .btn-primary:hover{background:#914568;border-color:#914568}html[data-tema-admin="lavanda"] .btn-outline-success,html[data-tema-admin="lavanda"] .link-success{color:#ad5f8d!important;border-color:#ad5f8d!important}html[data-tema-admin="lavanda"] .page-item.active .page-link{background:#ad5f8d;border-color:#ad5f8d}
 `;
 document.head.appendChild(ajusteBotoesTemaAdmin);
+const destaqueTemaAdmin = document.createElement('style');
+destaqueTemaAdmin.textContent = `
+html[data-tema-admin="noite"] [data-tema-admin].active{background:#2d7a57!important;color:#fff!important;border-color:#2d7a57!important}
+html[data-tema-admin="grafite"] [data-tema-admin].active{background:#3f72c8!important;color:#fff!important;border-color:#3f72c8!important}
+html[data-tema-admin="claro"] [data-tema-admin].active{background:#39726c!important;color:#fff!important;border-color:#39726c!important}
+html[data-tema-admin="lavanda"] [data-tema-admin].active{background:#ad5f8d!important;color:#fff!important;border-color:#ad5f8d!important}
+html[data-tema-admin="gotico"] [data-tema-admin].active{background:#7c3aed!important;color:#fff!important;border-color:#7c3aed!important}
+`;
+document.head.appendChild(destaqueTemaAdmin);

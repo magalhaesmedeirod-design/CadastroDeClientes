@@ -121,5 +121,14 @@ html[data-tema-cliente="noite"] .btn-success{background:#3b956b;border-color:#3b
 html[data-tema-cliente="grafite"] .btn-success{background:#4c80d4;border-color:#4c80d4}html[data-tema-cliente="grafite"] .btn-success:hover{background:#6699ed;border-color:#6699ed}html[data-tema-cliente="grafite"] .view-toggle .btn.active{background:#4c80d4;border-color:#4c80d4}
 `;
 document.head.appendChild(ajusteBotoesTemaCliente);
+const destaqueTemaCliente = document.createElement('style');
+destaqueTemaCliente.textContent = `
+html[data-tema-cliente="sereno"] [data-tema-cliente].active{background:#39726c!important;color:#fff!important;border-color:#39726c!important}
+html[data-tema-cliente="lavanda"] [data-tema-cliente].active{background:#ad5f8d!important;color:#fff!important;border-color:#ad5f8d!important}
+html[data-tema-cliente="noite"] [data-tema-cliente].active{background:#3b956b!important;color:#fff!important;border-color:#3b956b!important}
+html[data-tema-cliente="grafite"] [data-tema-cliente].active{background:#4c80d4!important;color:#fff!important;border-color:#4c80d4!important}
+html[data-tema-cliente="gotico"] [data-tema-cliente].active{background:#7c3aed!important;color:#fff!important;border-color:#7c3aed!important}
+`;
+document.head.appendChild(destaqueTemaCliente);
 window.addEventListener('hashchange', () => { const tela = location.hash.slice(1); if (telas.includes(tela)) mostrarTela(tela, false); });
 (async () => { await Promise.all([carregarPerfil(), carregarVeiculos(), carregarApartamentos()]); mostrarTela(telas.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'inicio', false); })();
