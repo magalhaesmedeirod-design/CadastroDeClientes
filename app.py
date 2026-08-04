@@ -1,7 +1,7 @@
 import os
 from functools import wraps
 
-from flask import Flask, jsonify, request, send_from_directory, session
+from flask import Flask, jsonify, request, Response, send_from_directory, session
 import controladores
 import contas
 import banco_dados
@@ -36,6 +36,159 @@ def cliente_da_conta(usuario):
     email = str(conta.get("email", "")).strip().casefold()
     return next((cliente for cliente in controladores.listar_clientes()
                  if str(cliente.get("email", "")).strip().casefold() == email), None)
+
+
+def _escapar_pdf(texto):
+    texto = str(texto or "")
+    return texto.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
+def _gerar_pdf_cliente(cliente, apartamentos, vagas, veiculos):
+    conteudo = []
+    
+    conteudo.append("q")
+    conteudo.append("0.126 0.353 0.247 rg")
+    conteudo.append("0 700 612 92 re f")
+    conteudo.append("Q")
+    
+    conteudo.append("BT /F2 28 Tf 50 760 Td (RELATORIO DO CLIENTE) Tj ET")
+    conteudo.append("BT /F1 10 Tf 50 730 Td (Gerado em 04 de agosto de 2026) Tj ET")
+    
+    conteudo.append("q 0.8 0.8 0.8 rg 50 710 512 0.5 re f Q")
+    
+    y = 690
+    conteudo.append(f"BT /F2 12 Tf 50 {y} Td (Dados Cadastrais) Tj ET")
+    y -= 20
+    
+    dados_cadastro = [
+        ("Nome:", cliente.get('nome', '')),
+        ("CPF:", cliente.get('cpf', '')),
+        ("E-mail:", cliente.get('email', '')),
+        ("Telefone:", cliente.get('telefone', '')),
+        ("CEP:", cliente.get('cep', '')),
+        ("Logradouro:", cliente.get('logradouro', '')),
+        ("Bairro:", cliente.get('bairro', '')),
+        ("Cidade:", cliente.get('cidade', '')),
+    ]
+    
+    col1_x, col2_x = 50, 310
+    linha_atual = 0
+    for i, (rotulo, valor) in enumerate(dados_cadastro):
+        if i > 0 and i % 2 == 0:
+            y -= 16
+        x = col1_x if i % 2 == 0 else col2_x
+        conteudo.append(f"BT /F2 9 Tf {x} {y} Td ({_escapar_pdf(rotulo)}) Tj ET")
+        conteudo.append(f"BT /F1 9 Tf {x + 60} {y} Td ({_escapar_pdf(valor)}) Tj ET")
+    
+    y -= 30
+    conteudo.append(f"q 0.8 0.8 0.8 rg 50 {y} 512 0.5 re f Q")
+    
+    conta_vinculada = None
+    email_cliente = str(cliente.get("email", "")).strip().casefold()
+    if email_cliente:
+        conta_vinculada = next((item for item in contas.listar_contas_publicas() if str(item.get("email", "")).strip().casefold() == email_cliente), None)
+    
+    if conta_vinculada:
+        y -= 20
+        conteudo.append(f"BT /F2 12 Tf 50 {y} Td (Conta Associada) Tj ET")
+        y -= 18
+        conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Usuario:) Tj ET")
+        conteudo.append(f"BT /F1 9 Tf 110 {y} Td ({_escapar_pdf(conta_vinculada.get('usuario', ''))}) Tj ET")
+        y -= 14
+        conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Ultimo acesso:) Tj ET")
+        conteudo.append(f"BT /F1 9 Tf 110 {y} Td ({_escapar_pdf(str(conta_vinculada.get('ultimo_login', 'Nunca acessou')))}) Tj ET")
+        y -= 14
+        conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Total de acessos:) Tj ET")
+        conteudo.append(f"BT /F1 9 Tf 110 {y} Td ({conta_vinculada.get('total_logins', 0)}) Tj ET")
+        y -= 25
+    else:
+        y -= 20
+    
+    conteudo.append(f"q 0.8 0.8 0.8 rg 50 {y} 512 0.5 re f Q")
+    
+    y -= 20
+    conteudo.append(f"BT /F2 12 Tf 50 {y} Td (Apartamentos) Tj ET")
+    y -= 16
+    
+    if apartamentos:
+        for apartamento in apartamentos:
+            conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Numero:) Tj ET")
+            conteudo.append(f"BT /F1 9 Tf 120 {y} Td ({_escapar_pdf(apartamento.get('numero', ''))}) Tj ET")
+            conteudo.append(f"BT /F2 9 Tf 250 {y} Td (Andar:) Tj ET")
+            conteudo.append(f"BT /F1 9 Tf 310 {y} Td ({_escapar_pdf(apartamento.get('andar', ''))}) Tj ET")
+            y -= 13
+            conteudo.append(f"BT /F1 9 Tf 50 {y} Td ({_escapar_pdf(apartamento.get('proprietario_nome', ''))}) Tj ET")
+            pessoas = [p.get("nome", "") for p in apartamento.get("pessoas", []) if p.get("nome")]
+            if pessoas:
+                y -= 12
+                conteudo.append(f"BT /F1 8 Tf 50 {y} Td (Pessoas: {_escapar_pdf(', '.join(pessoas))}) Tj ET")
+            y -= 14
+    else:
+        conteudo.append(f"BT /F1 9 Tf 50 {y} Td (Nenhum apartamento vinculado) Tj ET")
+        y -= 14
+    
+    y -= 10
+    conteudo.append(f"q 0.8 0.8 0.8 rg 50 {y} 512 0.5 re f Q")
+    
+    y -= 20
+    conteudo.append(f"BT /F2 12 Tf 50 {y} Td (Vagas) Tj ET")
+    y -= 16
+    
+    if vagas:
+        for vaga in vagas:
+            placas = ", ".join(v.get("placa", "") for v in vaga.get("veiculos", []) if v.get("placa"))
+            conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Vaga:) Tj ET")
+            conteudo.append(f"BT /F1 9 Tf 100 {y} Td ({_escapar_pdf(vaga.get('numero', ''))}) Tj ET")
+            y -= 12
+            vaga_desc = f"Apt. {_escapar_pdf(vaga.get('apartamento_numero', ''))} - {_escapar_pdf(placas or 'Nenhum')}"
+            conteudo.append(f"BT /F1 9 Tf 50 {y} Td ({vaga_desc}) Tj ET")
+            y -= 14
+    else:
+        conteudo.append(f"BT /F1 9 Tf 50 {y} Td (Nenhuma vaga vinculada) Tj ET")
+        y -= 14
+    
+    y -= 10
+    conteudo.append(f"q 0.8 0.8 0.8 rg 50 {y} 512 0.5 re f Q")
+    
+    y -= 20
+    conteudo.append(f"BT /F2 12 Tf 50 {y} Td (Veiculos) Tj ET")
+    y -= 16
+    
+    if veiculos:
+        for veiculo in veiculos:
+            conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Placa:) Tj ET")
+            conteudo.append(f"BT /F1 9 Tf 100 {y} Td ({_escapar_pdf(veiculo.get('placa', ''))}) Tj ET")
+            y -= 12
+            conteudo.append(f"BT /F1 9 Tf 50 {y} Td ({_escapar_pdf(veiculo.get('marca', '') + ' ' + veiculo.get('modelo', ''))} - {_escapar_pdf(veiculo.get('cor', ''))}) Tj ET")
+            y -= 14
+    else:
+        conteudo.append(f"BT /F1 9 Tf 50 {y} Td (Nenhum veiculo vinculado) Tj ET")
+    
+    stream = "\n".join(conteudo)
+    objetos = [
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>\nendobj\n",
+        b"4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n",
+        b"5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>\nendobj\n",
+    ]
+    stream_bytes = stream.encode("latin-1", "ignore")
+    objetos.append(f"6 0 obj\n<< /Length {len(stream_bytes)} >>\nstream\n".encode("latin-1") + stream_bytes + b"\nendstream\nendobj\n")
+
+    pdf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for objeto in objetos:
+        offsets.append(len(pdf))
+        pdf.extend(objeto)
+
+    xref_pos = len(pdf)
+    pdf.extend(f"xref\n0 {len(objetos) + 1}\n".encode("latin-1"))
+    pdf.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        pdf.extend(f"{offset:010d} 00000 n \n".encode("latin-1"))
+
+    pdf.extend(f"trailer\n<< /Size {len(objetos) + 1} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode("latin-1"))
+    return bytes(pdf)
 
 # ---- ROTAS PARA CONECTAR O SEU FRONT-END ----
 @app.route("/")
@@ -319,6 +472,30 @@ def servir_arquivos_front(path):
 @admin_obrigatorio
 def api_listar():
     return jsonify(controladores.listar_clientes())
+
+@app.route("/api/admin/clientes/<string:id_cliente>/pdf", methods=["GET"])
+@admin_obrigatorio
+def api_admin_cliente_pdf(id_cliente):
+    cliente = next((item for item in controladores.listar_clientes() if item.get("id") == id_cliente), None)
+    if not cliente:
+        return jsonify({"erro": "Cliente não encontrado."}), 404
+
+    apartamentos = [
+        apartamento for apartamento in controladores.listar_apartamentos()
+        if apartamento.get("proprietario_id") == cliente.get("id")
+        or any(pessoa.get("id") == cliente.get("id") for pessoa in apartamento.get("pessoas", []))
+    ]
+    vagas = [
+        vaga for vaga in controladores.listar_vagas()
+        if any(apartamento.get("id") == vaga.get("apartamento_id") for apartamento in apartamentos)
+    ]
+    veiculos = [
+        veiculo for veiculo in controladores.listar_veiculos()
+        if veiculo.get("proprietario_id") == cliente.get("id")
+    ]
+
+    pdf_bytes = _gerar_pdf_cliente(cliente, apartamentos, vagas, veiculos)
+    return Response(pdf_bytes, mimetype="application/pdf", headers={"Content-Disposition": f"inline; filename=cliente_{id_cliente}.pdf"})
 
 @app.route("/api/clientes", methods=["POST"])
 @admin_obrigatorio
