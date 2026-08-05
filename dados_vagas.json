@@ -1,82 +1,18 @@
 [
   {
-    "numero": "A1",
-    "apartamento_id": "1785329101214",
-    "apartamento_numero": "101",
-    "proprietario_id": "1784237024818",
-    "proprietario_nome": "Danilo Magalhães Medeiro",
-    "veiculos": [
-      {
-        "id": "1785157741739",
-        "placa": "NDN9A44",
-        "modelo": "Siena"
-      },
-      {
-        "id": "1785157958441",
-        "placa": "ABC8D9",
-        "modelo": "Renault Kwid"
-      }
-    ],
+    "nome": "A1",
     "id": "1785329496566"
   },
   {
-    "numero": "A2",
-    "apartamento_id": "1785329101214",
-    "apartamento_numero": "101",
-    "proprietario_id": "1784237024818",
-    "proprietario_nome": "Danilo Magalhães Medeiro",
-    "veiculos": [
-      {
-        "id": "1785157741739",
-        "placa": "NDN9A44",
-        "modelo": "Siena"
-      },
-      {
-        "id": "1785157958441",
-        "placa": "ABC8D9",
-        "modelo": "Renault Kwid"
-      }
-    ],
+    "nome": "A2",
     "id": "1785329528502"
   },
   {
-    "numero": "A4",
-    "apartamento_id": "1785330752097",
-    "apartamento_numero": "103",
-    "proprietario_id": "1784300685173",
-    "proprietario_nome": "Tate McRae",
-    "veiculos": [
-      {
-        "id": "1785159622777",
-        "placa": "SDF7JK",
-        "modelo": "Yaris Cross"
-      },
-      {
-        "id": "1785158679217",
-        "placa": "CBA3ED",
-        "modelo": "HR-V EXL"
-      }
-    ],
+    "nome": "A4",
     "id": "1785330803477"
   },
   {
-    "numero": "B10",
-    "apartamento_id": "1785329101214",
-    "apartamento_numero": "101",
-    "proprietario_id": "1784237024818",
-    "proprietario_nome": "Danilo Magalhães Medeiro",
-    "veiculos": [
-      {
-        "id": "1785157741739",
-        "placa": "NDN9A44",
-        "modelo": "Siena"
-      },
-      {
-        "id": "1785158679217",
-        "placa": "CBA3ED",
-        "modelo": "HR-V EXL"
-      }
-    ],
+    "nome": "B10",
     "id": "1785854508766"
   }
 ]

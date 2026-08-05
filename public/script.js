@@ -20,7 +20,7 @@ function renderizarApartamentos() {
   $('#sem-apartamentos').hidden = apartamentos.length > 0;
   $('#lista-apartamentos').innerHTML = apartamentos.map(a => {
     const moradores = (a.pessoas || []).map(p => textoSeguro(p.nome)).join(', ') || 'Nenhum morador atribuído';
-    const vagas = (a.vagas || []).map(v => `<li><strong>${textoSeguro(v.numero)}</strong>${v.veiculos?.length ? ` — ${v.veiculos.map(c => textoSeguro(c.placa)).join(', ')}` : ' — sem veículos atribuídos'}</li>`).join('') || '<li>Não há vagas cadastradas.</li>';
+    const vagas = (a.vagas || []).map(v => `<li><strong>${textoSeguro(v.nome)}</strong></li>`).join('') || '<li>Não há vagas cadastradas.</li>';
     const vinculo = a.vinculo === 'morador' ? 'Você mora neste apartamento' : 'Você é o proprietário';
     return `<div class="col-lg-6"><article class="portal-card p-4 h-100"><div class="d-flex justify-content-between gap-3 mb-3"><div><p class="text-secondary mb-1">Apartamento</p><h2 class="h4 mb-0">${textoSeguro(a.numero)}</h2></div><span class="badge text-bg-light border align-self-start">Andar ${textoSeguro(a.andar)}</span></div><p class="text-success fw-semibold small"><i class="bi bi-house-check me-1"></i>${vinculo}</p><div class="mb-3"><div class="detail-label">Moradores atribuídos</div><p class="mb-0">${moradores}</p></div><div><div class="detail-label">Vagas deste apartamento</div><ul class="mb-0 ps-3">${vagas}</ul></div></article></div>`;
   }).join('');

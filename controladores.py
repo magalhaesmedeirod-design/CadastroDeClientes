@@ -186,7 +186,7 @@ def criar_apartamento(dados):
     registros = listar_apartamentos(); novo = _validar_apartamento(dados)
     if any(r.get("numero", "").casefold() == novo["numero"].casefold() for r in registros):
         raise ErroValidacao("Já existe um apartamento com este número.")
-    novo["id"] = str(int(time.time() * 1000)); registros.append(novo); banco_dados.salvar_apartamentos(registros); return novo
+    novo["id"] = str(int(time.time() * 1000)); novo["vagas"] = []; registros.append(novo); banco_dados.salvar_apartamentos(registros); return novo
 
 def atualizar_apartamento(ident, dados):
     registros = listar_apartamentos(); novo = _validar_apartamento(dados, ident)
@@ -194,40 +194,44 @@ def atualizar_apartamento(ident, dados):
         raise ErroValidacao("Já existe um apartamento com este número.")
     for i, registro in enumerate(registros):
         if registro.get("id") == ident:
-            novo["id"] = ident; registros[i] = novo; banco_dados.salvar_apartamentos(registros); return novo
+            novo["id"] = ident; novo["vagas"] = registro.get("vagas", []); registros[i] = novo; banco_dados.salvar_apartamentos(registros); return novo
     return None
 
 def deletar_apartamento(ident):
-    if any(vaga.get("apartamento_id") == ident for vaga in banco_dados.ler_vagas()):
-        raise ErroValidacao("Remova primeiro as vagas deste apartamento.")
     registros = listar_apartamentos(); novos = [r for r in registros if r.get("id") != ident]
     if len(novos) == len(registros): return False
     banco_dados.salvar_apartamentos(novos); return True
 
 
+def vincular_vaga_apartamento(id_apartamento, id_vaga):
+    apartamentos = listar_apartamentos()
+    vaga = next((v for v in listar_vagas() if v.get("id") == id_vaga), None)
+    if not vaga:
+        raise ErroValidacao("Vaga não encontrada.")
+    for apartamento in apartamentos:
+        if apartamento.get("id") == id_apartamento:
+            vagas_atuais = apartamento.get("vagas", [])
+            if any(v.get("id") == id_vaga for v in vagas_atuais):
+                raise ErroValidacao("Esta vaga já está vinculada a este apartamento.")
+            vagas_atuais.append({"id": vaga["id"], "nome": vaga.get("nome", "")})
+            apartamento["vagas"] = vagas_atuais
+            banco_dados.salvar_apartamentos(apartamentos)
+            return apartamento
+    raise ErroValidacao("Apartamento não encontrado.")
+
+
 def _validar_vaga(dados, ident_atual=None):
-    numero = _texto(dados, "numero", 20, "Número da vaga")
-    apartamento_id = _texto(dados, "apartamento_id", 30, "Apartamento")
-    apartamento = next((a for a in listar_apartamentos() if a.get("id") == apartamento_id), None)
-    if not apartamento: raise ErroValidacao("Selecione um apartamento cadastrado.")
-    veiculos_ids = dados.get("veiculos_ids")
-    if not isinstance(veiculos_ids, list) or not veiculos_ids: raise ErroValidacao("Selecione ao menos um veículo.")
-    if len(veiculos_ids) != len(set(veiculos_ids)): raise ErroValidacao("Um veículo não pode ser adicionado duas vezes.")
-    veiculos = {v.get("id"): v for v in listar_veiculos()}; selecionados = []
-    for veiculo_id in veiculos_ids:
-        veiculo = veiculos.get(str(veiculo_id))
-        if not veiculo: raise ErroValidacao("Um dos veículos selecionados não está mais cadastrado.")
-        selecionados.append({"id": veiculo["id"], "placa": veiculo.get("placa", ""), "modelo": veiculo.get("modelo", "")})
-    return {"numero": numero, "apartamento_id": apartamento["id"], "apartamento_numero": apartamento.get("numero", ""), "proprietario_id": apartamento.get("proprietario_id", ""), "proprietario_nome": apartamento.get("proprietario_nome", ""), "veiculos": selecionados}
+    nome = _texto(dados, "nome", 60, "Nome da vaga")
+    return {"nome": nome}
 
 def listar_vagas(): return banco_dados.ler_vagas()
 def criar_vaga(dados):
     registros = listar_vagas(); novo = _validar_vaga(dados)
-    if any(r.get("numero", "").casefold() == novo["numero"].casefold() for r in registros): raise ErroValidacao("Esta vaga já pertence a outro apartamento.")
+    if any(r.get("nome", "").casefold() == novo["nome"].casefold() for r in registros): raise ErroValidacao("Já existe uma vaga com este nome.")
     novo["id"] = str(int(time.time() * 1000)); registros.append(novo); banco_dados.salvar_vagas(registros); return novo
 def atualizar_vaga(ident, dados):
     registros = listar_vagas(); novo = _validar_vaga(dados, ident)
-    if any(r.get("id") != ident and r.get("numero", "").casefold() == novo["numero"].casefold() for r in registros): raise ErroValidacao("Esta vaga já pertence a outro apartamento.")
+    if any(r.get("id") != ident and r.get("nome", "").casefold() == novo["nome"].casefold() for r in registros): raise ErroValidacao("Já existe uma vaga com este nome.")
     for i, registro in enumerate(registros):
         if registro.get("id") == ident:
             novo["id"] = ident; registros[i] = novo; banco_dados.salvar_vagas(registros); return novo

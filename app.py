@@ -136,12 +136,8 @@ def _gerar_pdf_cliente(cliente, apartamentos, vagas, veiculos):
     
     if vagas:
         for vaga in vagas:
-            placas = ", ".join(v.get("placa", "") for v in vaga.get("veiculos", []) if v.get("placa"))
             conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Vaga:) Tj ET")
-            conteudo.append(f"BT /F1 9 Tf 100 {y} Td ({_escapar_pdf(vaga.get('numero', ''))}) Tj ET")
-            y -= 12
-            vaga_desc = f"Apt. {_escapar_pdf(vaga.get('apartamento_numero', ''))} - {_escapar_pdf(placas or 'Nenhum')}"
-            conteudo.append(f"BT /F1 9 Tf 50 {y} Td ({vaga_desc}) Tj ET")
+            conteudo.append(f"BT /F1 9 Tf 100 {y} Td ({_escapar_pdf(vaga.get('nome', ''))}) Tj ET")
             y -= 14
     else:
         conteudo.append(f"BT /F1 9 Tf 50 {y} Td (Nenhuma vaga vinculada) Tj ET")
@@ -352,6 +348,16 @@ def api_admin_gerenciar_apartamento(ident):
         return (jsonify(item), 200) if item else (jsonify({"erro": "Apartamento não encontrado."}), 404)
     except controladores.ErroValidacao as erro: return jsonify({"erro": str(erro)}), 400
 
+@app.route("/api/admin/apartamentos/<string:ident>/vagas", methods=["POST"])
+@admin_obrigatorio
+def api_admin_vincular_vaga(ident):
+    try:
+        dados = request.get_json(silent=True) or {}
+        apartamento = controladores.vincular_vaga_apartamento(ident, str(dados.get("vaga_id", "")).strip())
+        return jsonify(apartamento)
+    except controladores.ErroValidacao as erro:
+        return jsonify({"erro": str(erro)}), 400
+
 @app.route("/api/admin/vagas", methods=["GET", "POST"])
 @admin_obrigatorio
 def api_admin_vagas():
@@ -458,10 +464,7 @@ def api_meus_apartamentos():
             apartamentos.append({**apartamento, "vinculo": "proprietario"})
         elif any(pessoa.get("id") == cliente.get("id") for pessoa in apartamento.get("pessoas", [])):
             apartamentos.append({**apartamento, "vinculo": "morador"})
-    vagas = controladores.listar_vagas()
-    return jsonify([{**apartamento, "vagas": [vaga for vaga in vagas
-                                                if vaga.get("apartamento_id") == apartamento.get("id")]}
-                    for apartamento in apartamentos])
+    return jsonify([{**apartamento, "vagas": []} for apartamento in apartamentos])
 
 @app.route("/<path:path>")
 def servir_arquivos_front(path):
@@ -485,10 +488,7 @@ def api_admin_cliente_pdf(id_cliente):
         if apartamento.get("proprietario_id") == cliente.get("id")
         or any(pessoa.get("id") == cliente.get("id") for pessoa in apartamento.get("pessoas", []))
     ]
-    vagas = [
-        vaga for vaga in controladores.listar_vagas()
-        if any(apartamento.get("id") == vaga.get("apartamento_id") for apartamento in apartamentos)
-    ]
+    vagas = []
     veiculos = [
         veiculo for veiculo in controladores.listar_veiculos()
         if veiculo.get("proprietario_id") == cliente.get("id")
