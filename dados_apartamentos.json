@@ -14,7 +14,33 @@
         "nome": "Eliane Aparecida de Magalhães"
       }
     ],
-    "id": "1785329101214"
+    "id": "1785329101214",
+    "vagas": [
+      {
+        "id": "1785976540600",
+        "nome": "A19",
+        "veiculos": [
+          {
+            "id": "1785157958441",
+            "placa": "ABC8D9",
+            "nome": "Fiat Renault Kwid"
+          },
+          {
+            "id": "1785159928821",
+            "placa": "QWE0UY",
+            "nome": "Chevrolet Equinox Turbo"
+          },
+          {
+            "id": "1785158369358",
+            "placa": "JKL1H12",
+            "nome": "Honda HR-V"
+          }
+        ],
+        "veiculo_id": "1785157958441",
+        "veiculo_placa": "ABC8D9",
+        "veiculo_nome": "Fiat Renault Kwid"
+      }
+    ]
   },
   {
     "numero": "103",

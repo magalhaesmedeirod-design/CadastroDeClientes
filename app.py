@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from functools import wraps
 
 from flask import Flask, jsonify, request, Response, send_from_directory, session
@@ -52,7 +53,8 @@ def _gerar_pdf_cliente(cliente, apartamentos, vagas, veiculos):
     conteudo.append("Q")
     
     conteudo.append("BT /F2 28 Tf 50 760 Td (RELATORIO DO CLIENTE) Tj ET")
-    conteudo.append("BT /F1 10 Tf 50 730 Td (Gerado em 04 de agosto de 2026) Tj ET")
+    data_geracao = datetime.now().strftime("%d/%m/%Y %H:%M")
+    conteudo.append(f"BT /F1 10 Tf 50 730 Td (Gerado em {data_geracao}) Tj ET")
     
     conteudo.append("q 0.8 0.8 0.8 rg 50 710 512 0.5 re f Q")
     
@@ -139,6 +141,17 @@ def _gerar_pdf_cliente(cliente, apartamentos, vagas, veiculos):
             conteudo.append(f"BT /F2 9 Tf 50 {y} Td (Vaga:) Tj ET")
             conteudo.append(f"BT /F1 9 Tf 100 {y} Td ({_escapar_pdf(vaga.get('nome', ''))}) Tj ET")
             y -= 14
+            numero_apartamento = vaga.get("apartamento_numero", "")
+            if numero_apartamento:
+                conteudo.append(f"BT /F1 8 Tf 50 {y} Td (Apartamento: {_escapar_pdf(numero_apartamento)}) Tj ET")
+                y -= 12
+            carros = vaga.get("veiculos", [])
+            if not carros and vaga.get("veiculo_id"):
+                carros = [{"placa": vaga.get("veiculo_placa", ""), "nome": vaga.get("veiculo_nome", "")}]
+            if carros:
+                descricao_carros = ", ".join(filter(None, [" ".join(filter(None, [carro.get("placa", ""), carro.get("nome", "")])) for carro in carros]))
+                conteudo.append(f"BT /F1 8 Tf 50 {y} Td (Carros: {_escapar_pdf(descricao_carros)}) Tj ET")
+                y -= 12
     else:
         conteudo.append(f"BT /F1 9 Tf 50 {y} Td (Nenhuma vaga vinculada) Tj ET")
         y -= 14
@@ -353,7 +366,10 @@ def api_admin_gerenciar_apartamento(ident):
 def api_admin_vincular_vaga(ident):
     try:
         dados = request.get_json(silent=True) or {}
-        apartamento = controladores.vincular_vaga_apartamento(ident, str(dados.get("vaga_id", "")).strip())
+        veiculos_ids = dados.get("veiculos_ids", [])
+        if not veiculos_ids and dados.get("veiculo_id"):
+            veiculos_ids = [dados.get("veiculo_id")]
+        apartamento = controladores.vincular_vaga_apartamento(ident, str(dados.get("vaga_id", "")).strip(), veiculos_ids)
         return jsonify(apartamento)
     except controladores.ErroValidacao as erro:
         return jsonify({"erro": str(erro)}), 400
@@ -392,9 +408,12 @@ def api_admin_veiculos():
 @admin_obrigatorio
 def api_admin_gerenciar_veiculo(id_veiculo):
     if request.method == "DELETE":
-        if controladores.deletar_veiculo(id_veiculo):
-            return jsonify({"mensagem": "Veículo removido com sucesso."})
-        return jsonify({"erro": "Veículo não encontrado."}), 404
+        try:
+            if controladores.deletar_veiculo(id_veiculo):
+                return jsonify({"mensagem": "Veículo removido com sucesso."})
+            return jsonify({"erro": "Veículo não encontrado."}), 404
+        except controladores.ErroValidacao as erro:
+            return jsonify({"erro": str(erro)}), 400
     try:
         veiculo = controladores.atualizar_veiculo(id_veiculo, request.get_json(silent=True) or {})
     except controladores.ErroValidacao as erro:
@@ -464,7 +483,7 @@ def api_meus_apartamentos():
             apartamentos.append({**apartamento, "vinculo": "proprietario"})
         elif any(pessoa.get("id") == cliente.get("id") for pessoa in apartamento.get("pessoas", [])):
             apartamentos.append({**apartamento, "vinculo": "morador"})
-    return jsonify([{**apartamento, "vagas": []} for apartamento in apartamentos])
+    return jsonify(apartamentos)
 
 @app.route("/<path:path>")
 def servir_arquivos_front(path):
@@ -488,7 +507,11 @@ def api_admin_cliente_pdf(id_cliente):
         if apartamento.get("proprietario_id") == cliente.get("id")
         or any(pessoa.get("id") == cliente.get("id") for pessoa in apartamento.get("pessoas", []))
     ]
-    vagas = []
+    vagas = [
+        {**vaga, "apartamento_numero": apartamento.get("numero", "")}
+        for apartamento in apartamentos
+        for vaga in apartamento.get("vagas", [])
+    ]
     veiculos = [
         veiculo for veiculo in controladores.listar_veiculos()
         if veiculo.get("proprietario_id") == cliente.get("id")

@@ -129,6 +129,8 @@ def atualizar_veiculo(id_veiculo, dados_editados):
 
 
 def deletar_veiculo(id_veiculo):
+    if any(vaga.get("veiculo_id") == id_veiculo or any(veiculo.get("id") == id_veiculo for veiculo in vaga.get("veiculos", [])) for apartamento in listar_apartamentos() for vaga in apartamento.get("vagas", [])):
+        raise ErroValidacao("Nao e possivel excluir um veiculo vinculado a uma vaga.")
     veiculos = banco_dados.ler_veiculos()
     nova_lista = [veiculo for veiculo in veiculos if veiculo.get("id") != id_veiculo]
     if len(nova_lista) < len(veiculos):
@@ -203,17 +205,36 @@ def deletar_apartamento(ident):
     banco_dados.salvar_apartamentos(novos); return True
 
 
-def vincular_vaga_apartamento(id_apartamento, id_vaga):
+def vincular_vaga_apartamento(id_apartamento, id_vaga, ids_veiculos):
     apartamentos = listar_apartamentos()
     vaga = next((v for v in listar_vagas() if v.get("id") == id_vaga), None)
     if not vaga:
         raise ErroValidacao("Vaga não encontrada.")
+    if not isinstance(ids_veiculos, list):
+        raise ErroValidacao("Selecione pelo menos um veiculo.")
+    ids_veiculos = [str(ident).strip() for ident in ids_veiculos if str(ident).strip()]
+    if not ids_veiculos:
+        raise ErroValidacao("Selecione pelo menos um veiculo.")
+    if len(ids_veiculos) != len(set(ids_veiculos)):
+        raise ErroValidacao("Um veiculo foi selecionado mais de uma vez.")
+    todos_veiculos = listar_veiculos()
+    veiculos = [next((v for v in todos_veiculos if v.get("id") == ident), None) for ident in ids_veiculos]
+    if any(veiculo is None for veiculo in veiculos):
+        raise ErroValidacao("Veiculo nao encontrado.")
+    if any(vaga_registrada.get("id") == id_vaga for apartamento in apartamentos for vaga_registrada in apartamento.get("vagas", [])):
+        raise ErroValidacao("Esta vaga ja esta vinculada a outro apartamento.")
+    veiculos_vinculados = {veiculo.get("id") for apartamento in apartamentos for vaga_registrada in apartamento.get("vagas", []) for veiculo in vaga_registrada.get("veiculos", [])}
+    veiculos_vinculados.update(vaga_registrada.get("veiculo_id") for apartamento in apartamentos for vaga_registrada in apartamento.get("vagas", []) if vaga_registrada.get("veiculo_id"))
+    if any(ident in veiculos_vinculados for ident in ids_veiculos):
+        raise ErroValidacao("Este veiculo ja esta vinculado a uma vaga.")
     for apartamento in apartamentos:
         if apartamento.get("id") == id_apartamento:
             vagas_atuais = apartamento.get("vagas", [])
             if any(v.get("id") == id_vaga for v in vagas_atuais):
                 raise ErroValidacao("Esta vaga já está vinculada a este apartamento.")
-            vagas_atuais.append({"id": vaga["id"], "nome": vaga.get("nome", "")})
+            veiculos_da_vaga = [{"id": veiculo["id"], "placa": veiculo.get("placa", ""), "nome": " ".join(filter(None, [veiculo.get("marca", ""), veiculo.get("modelo", "")]))} for veiculo in veiculos]
+            primeiro_veiculo = veiculos_da_vaga[0]
+            vagas_atuais.append({"id": vaga["id"], "nome": vaga.get("nome", ""), "veiculos": veiculos_da_vaga, "veiculo_id": primeiro_veiculo["id"], "veiculo_placa": primeiro_veiculo["placa"], "veiculo_nome": primeiro_veiculo["nome"]})
             apartamento["vagas"] = vagas_atuais
             banco_dados.salvar_apartamentos(apartamentos)
             return apartamento
@@ -234,9 +255,21 @@ def atualizar_vaga(ident, dados):
     if any(r.get("id") != ident and r.get("nome", "").casefold() == novo["nome"].casefold() for r in registros): raise ErroValidacao("Já existe uma vaga com este nome.")
     for i, registro in enumerate(registros):
         if registro.get("id") == ident:
-            novo["id"] = ident; registros[i] = novo; banco_dados.salvar_vagas(registros); return novo
+            novo["id"] = ident; registros[i] = novo; banco_dados.salvar_vagas(registros)
+            apartamentos = listar_apartamentos()
+            alterado = False
+            for apartamento in apartamentos:
+                for vaga in apartamento.get("vagas", []):
+                    if vaga.get("id") == ident:
+                        vaga["nome"] = novo["nome"]
+                        alterado = True
+            if alterado:
+                banco_dados.salvar_apartamentos(apartamentos)
+            return novo
     return None
 def deletar_vaga(ident):
+    if any(vaga.get("id") == ident for apartamento in listar_apartamentos() for vaga in apartamento.get("vagas", [])):
+        raise ErroValidacao("Nao e possivel excluir uma vaga vinculada a um apartamento.")
     registros = listar_vagas(); novos = [r for r in registros if r.get("id") != ident]
     if len(novos) == len(registros): return False
     banco_dados.salvar_vagas(novos); return True

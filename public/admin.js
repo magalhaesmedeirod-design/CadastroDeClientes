@@ -1,5 +1,5 @@
 const $ = seletor => document.querySelector(seletor);
-const telas = ['inicio', 'clientes', 'form-cliente', 'veiculos', 'form-veiculo', 'apartamentos', 'form-apartamento', 'vagas', 'form-vaga', 'usuarios', 'form-usuario', 'perfil'];
+const telas = ['inicio', 'clientes', 'form-cliente', 'veiculos', 'form-veiculo', 'apartamentos', 'form-apartamento', 'apartamento-vaga', 'vagas', 'form-vaga', 'usuarios', 'form-usuario', 'perfil'];
 let clientes = [], usuarios = [], veiculos = [], apartamentos = [], vagas = [], paginaClientes = 1, paginaVeiculos = 1, paginaApartamentos = 1, paginaVagas = 1, perfilAtual = null;
 const CLIENTES_POR_PAGINA = 6;
 const camposCliente = ['id', 'nome', 'cpf', 'email', 'telefone', 'cep', 'logradouro', 'bairro', 'cidade', 'complemento', 'foto'];
@@ -111,7 +111,7 @@ async function abrirApartamento(item = null) {
     $('#form-apartamento').reset();
     $('#apartamento-proprietario_id').innerHTML = opcoesClientes(item?.proprietario_id || ''); $('#apartamento-pessoa-selecao').innerHTML = opcoesClientes();
     pessoasApartamento = item?.pessoas || []; $('#apartamento-id').value = item?.id || ''; $('#apartamento-numero').value = item?.numero || ''; $('#apartamento-andar').value = item?.andar || '';
-    renderizarPessoas(); $('#titulo-apartamento').textContent = item ? 'Editar apartamento' : 'Cadastrar apartamento'; $('#btn-excluir-apartamento').hidden = !item;
+    renderizarPessoas(); $('#titulo-apartamento').textContent = item ? 'Editar apartamento' : 'Cadastrar apartamento'; $('#btn-excluir-apartamento').hidden = !item; $('#bloco-vagas-apartamento').hidden = !item; renderizarVagasApartamento(item?.vagas || []);
     mostrarTela('form-apartamento');
   } catch (e) { erro(e.message); }
 }
@@ -131,8 +131,60 @@ function abrirVaga(item = null) {
 function editarVaga(id) { const vaga = vagas.find(v => v.id === id); if (vaga) abrirVaga(vaga); }
 async function salvarVaga(e) { e.preventDefault(); try { const id = $('#vaga-id').value; await requisicao(id ? `/api/admin/vagas/${encodeURIComponent(id)}` : '/api/admin/vagas', {method: id ? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({nome: $('#vaga-nome').value})}); mostrarTela('vagas'); } catch (err) { erro(err.message); } }
 async function excluirVaga() { const id = $('#vaga-id').value; if (!id || !confirm('Excluir esta vaga?')) return; try { await requisicao(`/api/admin/vagas/${encodeURIComponent(id)}`, {method:'DELETE'}); mostrarTela('vagas'); } catch (e) { erro(e.message); } }
+function renderizarVagasApartamento(vagasDoApartamento) { $('#lista-vagas-apartamento').innerHTML = vagasDoApartamento.length ? vagasDoApartamento.map(v => `<div class="badge text-bg-secondary fs-6 fw-normal p-2"><i class="bi bi-p-square me-1"></i>${seguro(v.nome)}<span class="d-block small fw-normal mt-1"><i class="bi bi-car-front me-1"></i>${seguro(v.veiculo_placa || 'Sem veiculo')} ${seguro(v.veiculo_nome || '')}</span></div>`).join('') : '<span class="text-body-secondary">Nenhuma vaga vinculada.</span>'; }
+function opcoesVagasDisponiveis() { const ocupadas = new Set(apartamentos.flatMap(a => (a.vagas || []).map(v => v.id))); return '<option value="">Selecione uma vaga</option>' + vagas.filter(v => !ocupadas.has(v.id)).map(v => `<option value="${seguro(v.id)}">${seguro(v.nome)}</option>`).join(''); }
+function opcoesVeiculosDisponiveis() { const vinculados = new Set(apartamentos.flatMap(a => (a.vagas || []).map(v => v.veiculo_id).filter(Boolean))); return '<option value="">Selecione um veiculo</option>' + veiculos.filter(v => !vinculados.has(v.id)).map(v => `<option value="${seguro(v.id)}">${seguro(v.placa)} — ${seguro(v.marca)} ${seguro(v.modelo)} (${seguro(v.proprietario_nome)})</option>`).join(''); }
+async function abrirVinculoVaga() { const apartamentoId = $('#apartamento-id').value; if (!apartamentoId) return; try { [vagas, veiculos, apartamentos] = await Promise.all([requisicao('/api/admin/vagas'), requisicao('/api/admin/veiculos'), requisicao('/api/admin/apartamentos')]); $('#apartamento-vaga-apartamento-id').value = apartamentoId; $('#apartamento-vaga-selecao').innerHTML = opcoesVagasDisponiveis(); $('#apartamento-veiculo-selecao').innerHTML = opcoesVeiculosDisponiveis(); mostrarTela('apartamento-vaga'); } catch (e) { erro(e.message); } }
+async function salvarVinculoVaga(event) { event.preventDefault(); const apartamentoId = $('#apartamento-vaga-apartamento-id').value; try { const apartamento = await requisicao(`/api/admin/apartamentos/${encodeURIComponent(apartamentoId)}/vagas`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({vaga_id: $('#apartamento-vaga-selecao').value, veiculo_id: $('#apartamento-veiculo-selecao').value})}); apartamentos = apartamentos.map(item => item.id === apartamento.id ? apartamento : item); await abrirApartamento(apartamento); } catch (e) { erro(e.message); } }
+function prepararInterfaceVagas() {
+  const botaoApartamento = $('#btn-novo-apartamento');
+  const botaoVaga = document.createElement('button');
+  botaoVaga.id = 'btn-cadastrar-vaga'; botaoVaga.type = 'button'; botaoVaga.className = 'btn btn-outline-success'; botaoVaga.innerHTML = '<i class="bi bi-p-square me-2"></i>Adicionar vaga';
+  botaoApartamento.parentElement.insertBefore(botaoVaga, botaoApartamento);
+  $('#tela-apartamento-vaga').innerHTML = `<div class="card border-0 shadow-sm mx-auto" style="max-width:900px"><div class="card-body p-3 p-md-4"><div class="d-flex justify-content-between mb-4"><div><h1 class="h3 mb-1">Adicionar vaga ao apartamento</h1><p class="text-body-secondary mb-0">Escolha a vaga e o veículo que poderá estacionar nela.</p></div><button class="btn btn-outline-secondary" type="button" id="btn-voltar-vaga-apartamento">Voltar</button></div><form id="form-apartamento-vaga"><input id="apartamento-vaga-apartamento-id" type="hidden"><div class="row g-3"><div class="col-md-6"><label class="form-label">Vaga cadastrada</label><select id="apartamento-vaga-selecao" class="form-select" required></select></div><div class="col-md-6"><label class="form-label">Veículo autorizado</label><select id="apartamento-veiculo-selecao" class="form-select" required></select></div></div><div class="mt-4"><button class="btn btn-primary">Salvar vínculo</button></div></form></div></div>`;
+  const campoId = $('#vaga-id'); campoId.type = 'text'; campoId.readOnly = true; campoId.placeholder = 'Gerado automaticamente'; campoId.className = 'form-control';
+  const grupoId = document.createElement('div'); grupoId.className = 'col-md-4'; grupoId.innerHTML = '<label class="form-label">ID</label>'; campoId.parentElement.insertBefore(grupoId, campoId); grupoId.appendChild(campoId);
+  $('#vaga-nome').parentElement.classList.replace('col-md-6', 'col-md-8');
+}
+// A vaga pode ter mais de um carro autorizado antes de ser salva.
+let veiculosSelecionadosVaga = [];
+function renderizarVagasApartamento(vagasDoApartamento) {
+  $('#lista-vagas-apartamento').innerHTML = vagasDoApartamento.length ? vagasDoApartamento.map(v => {
+    const carros = v.veiculos?.length ? v.veiculos : (v.veiculo_id ? [{placa: v.veiculo_placa, nome: v.veiculo_nome}] : []);
+    return `<div class="badge text-bg-secondary fs-6 fw-normal p-2"><i class="bi bi-p-square me-1"></i>${seguro(v.nome)}${carros.length ? carros.map(c => `<span class="d-block small fw-normal mt-1"><i class="bi bi-car-front me-1"></i>${seguro(c.placa)} ${seguro(c.nome)}</span>`).join('') : '<span class="d-block small fw-normal mt-1">Sem veículo</span>'}</div>`;
+  }).join('') : '<span class="text-body-secondary">Nenhuma vaga vinculada.</span>';
+}
+function opcoesVeiculosParaVaga() {
+  const vinculados = new Set(apartamentos.flatMap(a => (a.vagas || []).flatMap(v => v.veiculos?.map(c => c.id) || [v.veiculo_id]).filter(Boolean)));
+  return '<option value="">Selecione um carro</option>' + veiculos.filter(v => !vinculados.has(v.id) && !veiculosSelecionadosVaga.some(c => c.id === v.id)).map(v => `<option value="${seguro(v.id)}">${seguro(v.placa)} — ${seguro(v.marca)} ${seguro(v.modelo)} (${seguro(v.proprietario_nome)})</option>`).join('');
+}
+function renderizarCarrosDaVaga() {
+  $('#lista-carros-vaga').innerHTML = veiculosSelecionadosVaga.length ? veiculosSelecionadosVaga.map(c => `<span class="badge text-bg-secondary fs-6 fw-normal">${seguro(c.placa)} ${seguro(c.marca)} ${seguro(c.modelo)} <button class="btn-close btn-close-white ms-1" type="button" aria-label="Remover carro" data-remover-carro-vaga="${seguro(c.id)}"></button></span>`).join('') : '<span class="text-body-secondary">Nenhum carro adicionado.</span>';
+  $('#apartamento-veiculo-selecao').innerHTML = opcoesVeiculosParaVaga();
+  document.querySelectorAll('[data-remover-carro-vaga]').forEach(b => b.onclick = () => { veiculosSelecionadosVaga = veiculosSelecionadosVaga.filter(c => c.id !== b.dataset.removerCarroVaga); renderizarCarrosDaVaga(); });
+}
+async function abrirVinculoVaga() {
+  const apartamentoId = $('#apartamento-id').value; if (!apartamentoId) return;
+  try {
+    [vagas, veiculos, apartamentos] = await Promise.all([requisicao('/api/admin/vagas'), requisicao('/api/admin/veiculos'), requisicao('/api/admin/apartamentos')]);
+    veiculosSelecionadosVaga = []; $('#apartamento-vaga-apartamento-id').value = apartamentoId; $('#apartamento-vaga-selecao').innerHTML = opcoesVagasDisponiveis(); renderizarCarrosDaVaga(); mostrarTela('apartamento-vaga');
+  } catch (e) { erro(e.message); }
+}
+async function salvarVinculoVaga(event) {
+  event.preventDefault(); const apartamentoId = $('#apartamento-vaga-apartamento-id').value;
+  if (!veiculosSelecionadosVaga.length) return erro('Adicione pelo menos um carro à vaga.');
+  try {
+    const apartamento = await requisicao(`/api/admin/apartamentos/${encodeURIComponent(apartamentoId)}/vagas`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({vaga_id: $('#apartamento-vaga-selecao').value, veiculos_ids: veiculosSelecionadosVaga.map(c => c.id)})});
+    apartamentos = apartamentos.map(item => item.id === apartamento.id ? apartamento : item); await abrirApartamento(apartamento);
+  } catch (e) { erro(e.message); }
+}
+prepararInterfaceVagas();
+$('#tela-apartamento-vaga').innerHTML = `<div class="card border-0 shadow-sm mx-auto" style="max-width:900px"><div class="card-body p-3 p-md-4"><div class="d-flex justify-content-between mb-4"><div><h1 class="h3 mb-1">Adicionar vaga ao apartamento</h1><p class="text-body-secondary mb-0">Escolha a vaga e adicione os carros autorizados.</p></div><button class="btn btn-outline-secondary" type="button" id="btn-voltar-vaga-apartamento">Voltar</button></div><form id="form-apartamento-vaga"><input id="apartamento-vaga-apartamento-id" type="hidden"><div class="row g-3"><div class="col-12"><label class="form-label">Vaga cadastrada</label><select id="apartamento-vaga-selecao" class="form-select" required></select></div><div class="col-md-8"><label class="form-label">Selecionar carro</label><select id="apartamento-veiculo-selecao" class="form-select"></select></div><div class="col-md-4 d-flex align-items-end"><button id="btn-adicionar-carro-vaga" type="button" class="btn btn-outline-success w-100"><i class="bi bi-plus-lg me-2"></i>Adicionar carro</button></div><div class="col-12"><label class="form-label">Carros adicionados</label><div id="lista-carros-vaga" class="d-flex flex-wrap gap-2"></div></div></div><div class="mt-4"><button class="btn btn-primary">Salvar vínculo</button></div></form></div></div>`;
 $('#btn-novo-apartamento').onclick = () => abrirApartamento(); $('#busca-apartamentos').oninput = () => { paginaApartamentos = 1; renderizarApartamentos(); }; $('#form-apartamento').onsubmit = salvarApartamento; $('#btn-excluir-apartamento').onclick = excluirApartamento; $('#btn-adicionar-pessoa').onclick = () => { const id = $('#apartamento-pessoa-selecao').value, c = clientes.find(x => x.id === id); if (c && !pessoasApartamento.some(x => x.id === id)) { pessoasApartamento.push({id:c.id,nome:c.nome}); renderizarPessoas(); } };
 $('#btn-nova-vaga').onclick = () => abrirVaga(); $('#busca-vagas').oninput = () => { paginaVagas = 1; renderizarVagas(); }; $('#form-vaga').onsubmit = salvarVaga; $('#btn-excluir-vaga').onclick = excluirVaga;
+$('#btn-adicionar-vaga').onclick = abrirVinculoVaga; $('#form-apartamento-vaga').onsubmit = salvarVinculoVaga; $('#btn-voltar-vaga-apartamento').onclick = () => { const apartamento = apartamentos.find(item => item.id === $('#apartamento-vaga-apartamento-id').value); if (apartamento) abrirApartamento(apartamento); };
+$('#btn-adicionar-carro-vaga').onclick = () => { const carro = veiculos.find(v => v.id === $('#apartamento-veiculo-selecao').value); if (carro && !veiculosSelecionadosVaga.some(c => c.id === carro.id)) { veiculosSelecionadosVaga.push(carro); renderizarCarrosDaVaga(); } };
+$('#btn-cadastrar-vaga').onclick = () => abrirVaga();
 
 const estilosTemaAdmin = document.createElement('style');
 estilosTemaAdmin.textContent = `html[data-tema-admin="grafite"] body{background:#111827!important;color:#e5e7eb}html[data-tema-admin="grafite"] .card,html[data-tema-admin="grafite"] .table{background:#1f2937!important;color:#e5e7eb!important}html[data-tema-admin="grafite"] .table thead{background:#111827!important}html[data-tema-admin="grafite"] .card .form-control,html[data-tema-admin="grafite"] .card .form-select,html[data-tema-admin="grafite"] .card .input-group-text{background:#111827!important;color:#e5e7eb!important;border-color:#475569!important}html[data-tema-admin="grafite"] aside,html[data-tema-admin="grafite"] .navbar{background:#0f172a!important}html[data-tema-admin="claro"] body{background:#f4f7f5!important;color:#1f2933}html[data-tema-admin="claro"] .card,html[data-tema-admin="claro"] .table{background:#fff!important;color:#1f2933!important}html[data-tema-admin="claro"] .table thead{background:#eaf3ef!important}html[data-tema-admin="claro"] .card .form-control,html[data-tema-admin="claro"] .card .form-select,html[data-tema-admin="claro"] .card .input-group-text{background:#fff!important;color:#1f2933!important;border-color:#b8c8c1!important}html[data-tema-admin="claro"] aside,html[data-tema-admin="claro"] .navbar{background:#e8f1ed!important;color:#1f2933!important}html[data-tema-admin="claro"] aside .text-white,html[data-tema-admin="claro"] aside .btn-outline-light{color:#1f2933!important;border-color:#70857a!important}html[data-tema-admin="claro"] .text-body-secondary{color:#607068!important}html[data-tema-admin="claro"] .dropdown-menu{background:#fff;color:#1f2933}html[data-tema-admin="lavanda"] body{background:#f8f6fc!important;color:#312e4a}html[data-tema-admin="lavanda"] .card,html[data-tema-admin="lavanda"] .table{background:#fff!important;color:#312e4a!important}html[data-tema-admin="lavanda"] .table thead{background:#f0ebf8!important}html[data-tema-admin="lavanda"] .card .form-control,html[data-tema-admin="lavanda"] .card .form-select,html[data-tema-admin="lavanda"] .card .input-group-text{background:#fff!important;color:#312e4a!important;border-color:#c5bad8!important}html[data-tema-admin="lavanda"] aside,html[data-tema-admin="lavanda"] .navbar{background:#eee9f7!important;color:#312e4a!important}html[data-tema-admin="lavanda"] aside .text-white,html[data-tema-admin="lavanda"] aside .btn-outline-light{color:#312e4a!important;border-color:#85769d!important}html[data-tema-admin="lavanda"] .text-body-secondary{color:#706680!important}html[data-tema-admin="lavanda"] .dropdown-menu{background:#fff;color:#312e4a}`;
@@ -169,3 +221,6 @@ html[data-tema-admin="lavanda"] [data-tema-admin].active{background:#ad5f8d!impo
 html[data-tema-admin="gotico"] [data-tema-admin].active{background:#7c3aed!important;color:#fff!important;border-color:#7c3aed!important}
 `;
 document.head.appendChild(destaqueTemaAdmin);
+const elevacaoAdmin = document.createElement('style');
+elevacaoAdmin.textContent = `main .card,main .table-responsive{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}main .card:hover,main .table-responsive:hover{transform:translateY(-4px);border-color:var(--accent)!important;box-shadow:0 0 14px color-mix(in srgb,var(--accent) 48%,transparent),0 12px 28px color-mix(in srgb,var(--accent) 20%,transparent)!important}main .table-responsive{border:1px solid var(--line);border-radius:.75rem;background:var(--surface)}main .table-responsive .table{margin-bottom:0}`;
+document.head.appendChild(elevacaoAdmin);
